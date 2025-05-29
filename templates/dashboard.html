@@ -15,8 +15,11 @@
                 <img src="{{ url_for('static', filename='siamc_logo.jpg') }}" alt="Logo SIAMC" height="40" class="me-2 rounded">
                 <span>SIAMC Dashboard</span>
             </a>
-            <div>
-                <span class="navbar-text me-3 text-white">Bem-vindo, {{ user }}</span>
+            <div class="d-flex align-items-center">
+                <div class="me-3 text-white text-end">
+                    <div>Bem-vindo, {{ user }}</div>
+                    <small>🔒 Acesso expira em: <strong>{{ validade }}</strong></small>
+                </div>
                 <a href="{{ url_for('logout') }}" class="btn btn-outline-light btn-sm">Sair</a>
             </div>
         </div>

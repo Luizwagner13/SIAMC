@@ -3,6 +3,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import os
 import subprocess
 import json
+from datetime import datetime
 
 app = Flask(__name__)
 app.secret_key = 'segredo123'
@@ -25,38 +26,44 @@ def login():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
-        if username in users and check_password_hash(users[username], password):
-            session['user'] = username
-            user_folder = os.path.join('user_data', username)
-            os.makedirs(user_folder, exist_ok=True)
-            flash('Login realizado com sucesso!', 'sucesso')
-            return redirect(url_for('dashboard'))
-        else:
-            flash('Usuário ou senha incorretos', 'erro')
-            return redirect(url_for('login'))
+        user_data = users.get(username)
+
+        if user_data:
+            valid_until_str = user_data.get('valid_until')
+            if valid_until_str:
+                valid_until = datetime.strptime(valid_until_str, '%Y-%m-%d').date()
+                today = datetime.today().date()
+                if today > valid_until:
+                    return render_template('expirado.html', username=username, validade=valid_until)
+
+            if check_password_hash(user_data['password'], password):
+                session['user'] = username
+                user_folder = os.path.join('user_data', username)
+                os.makedirs(user_folder, exist_ok=True)
+                flash('Login realizado com sucesso!', 'sucesso')
+
+                if user_data.get('is_admin'):
+                    return redirect(url_for('admin'))
+                else:
+                    return redirect(url_for('dashboard'))
+
+        flash('Usuário ou senha incorretos', 'erro')
+        return redirect(url_for('login'))
+
     return render_template('login.html')
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
-    if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
-        if username not in users:
-            hashed_password = generate_password_hash(password)
-            users[username] = hashed_password
-            with open(USERS_FILE, 'w') as f:
-                json.dump(users, f)
-            flash('Cadastro realizado com sucesso! Faça login.', 'sucesso')
-            return redirect(url_for('login'))
-        else:
-            flash('Usuário já existe', 'erro')
-            return redirect(url_for('register'))
-    return render_template('register.html')
+    flash('O cadastro de novos usuários está desativado. Entre em contato com o administrador.', 'erro')
+    return redirect(url_for('login'))
 
 @app.route('/dashboard')
 def dashboard():
     if 'user' in session:
-        return render_template('dashboard.html', user=session['user'])
+        username = session['user']
+        user_data = users.get(username, {})
+        validade = user_data.get('valid_until', 'Indefinido')
+        return render_template('dashboard.html', user=username, validade=validade)
     flash('Faça login para acessar sua área.', 'erro')
     return redirect(url_for('login'))
 
@@ -174,6 +181,70 @@ def atualizar_medicao():
         flash('Erro ao atualizar a medição.', 'erro')
 
     return redirect(url_for('dashboard'))
+
+@app.route('/admin', methods=['GET', 'POST'])
+def admin():
+    if 'user' not in session:
+        flash('Faça login para acessar esta área.', 'erro')
+        return redirect(url_for('login'))
+
+    current_user = session['user']
+    user_data = users.get(current_user)
+
+    if not user_data or not user_data.get('is_admin'):
+        flash('Acesso negado.', 'erro')
+        return redirect(url_for('dashboard'))
+
+    if request.method == 'POST':
+        acao = request.form.get('acao')
+        username = request.form.get('username')
+
+        if acao == 'criar':
+            nova_senha = request.form.get('new_password')
+            validade = request.form.get('valid_until')
+            is_admin = True if request.form.get('is_admin') == 'on' else False
+
+            if username in users:
+                flash('Usuário já existe.', 'erro')
+            else:
+                users[username] = {
+                    'password': generate_password_hash(nova_senha),
+                    'valid_until': validade,
+                    'is_admin': is_admin
+                }
+                with open(USERS_FILE, 'w') as f:
+                    json.dump(users, f, indent=2)
+                flash(f'Usuário {username} criado com sucesso.', 'sucesso')
+
+        elif acao == 'editar':
+            validade = request.form.get('valid_until')
+            nova_senha = request.form.get('new_password')
+            is_admin = True if request.form.get('is_admin') == 'on' else False
+
+            if username in users:
+                users[username]['valid_until'] = validade
+                users[username]['is_admin'] = is_admin
+                if nova_senha:
+                    users[username]['password'] = generate_password_hash(nova_senha)
+                with open(USERS_FILE, 'w') as f:
+                    json.dump(users, f, indent=2)
+                flash(f'Usuário {username} atualizado com sucesso.', 'sucesso')
+            else:
+                flash('Usuário não encontrado.', 'erro')
+
+        elif acao == 'excluir':
+            if username in users:
+                if username == current_user:
+                    flash('Você não pode excluir a si mesmo.', 'erro')
+                else:
+                    del users[username]
+                    with open(USERS_FILE, 'w') as f:
+                        json.dump(users, f, indent=2)
+                    flash(f'Usuário {username} excluído com sucesso.', 'sucesso')
+            else:
+                flash('Usuário não encontrado.', 'erro')
+
+    return render_template('admin.html', users=users)
 
 if __name__ == '__main__':
     app.run(debug=True)
