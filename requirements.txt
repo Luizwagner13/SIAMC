@@ -1,0 +1,6 @@
+Flask
+Werkzeug
+pandas
+openpyxl
+pdfplumber
+gunicorn
