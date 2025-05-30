@@ -4,6 +4,9 @@ import pandas as pd
 import os
 import logging
 import sys
+import gc
+from openpyxl import Workbook
+from openpyxl.utils.dataframe import dataframe_to_rows
 
 logging.basicConfig(level=logging.ERROR)
 
@@ -55,74 +58,78 @@ def extrair_informacoes(texto):
         "Valor da O.S.": valores_os
     })
 
+def corrigir_valor(valor):
+    if valor:
+        return float(valor.replace(".", "").replace(",", "."))
+    return None
+
+def formatar_os(valor):
+    if valor and valor.isdigit():
+        try:
+            return float(valor)
+        except:
+            return valor
+    return valor
+
 def processar_pdfs_da_pasta(pasta_pdf):
     arquivos_pdf = [f for f in os.listdir(pasta_pdf) if f.lower().endswith('.pdf')]
-    todos_dados = []
+    print(f"📄 Encontrados {len(arquivos_pdf)} arquivos PDF.")
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = 'Dados'
+    colunas_escritas = False
 
     for nome_arquivo in arquivos_pdf:
         caminho_pdf = os.path.join(pasta_pdf, nome_arquivo)
-        print(f"Processando: {nome_arquivo}")
+        print(f"🚀 Processando: {nome_arquivo}")
         try:
             texto = extrair_texto_pdf(caminho_pdf)
             df = extrair_informacoes(texto)
             df["Arquivo"] = os.path.splitext(nome_arquivo)[0].upper()
-            todos_dados.append(df)
+
+            df["Número da O.S."] = df["Número da O.S."].apply(formatar_os)
+            df["Valor da O.S."] = df["Valor da O.S."].apply(corrigir_valor)
+
+            df["Código Numérico"] = pd.to_numeric(df["Código Numérico"], errors='coerce')
+            df = df[(df["Código Numérico"].isna()) | (df["Código Numérico"] >= 3000000)]
+            df = df[~df["Código Numérico"].between(3020000, 3029999, inclusive='both')]
+            df = df[~df["Código Numérico"].between(5050000, 5050300, inclusive='both')]
+            df = df[~df["Código Numérico"].between(5050400, 5050499, inclusive='both')]
+            df = df[~df["Código Numérico"].between(5050401, 5050409, inclusive='both')]
+            df = df[df["Código Numérico"] != 5210100]
+            df = df[~df["Código Numérico"].isin([5120200, 5040700])]
+
+            codigos_alfanumericos_excluir = ["IRTVA", "MA001", "IRTRAA", "RDA001"]
+            for codigo in codigos_alfanumericos_excluir:
+                df = df[~df["Código do Serviço"].str.startswith(codigo, na=False)]
+
+            filtro_5080400 = df["Código Numérico"] == 5080400
+            texto_geral = (df["Rua"].fillna("") + " " + df["Bairro"].fillna("")).str.upper()
+            manter = texto_geral.str.contains("INDUSTRIAL|BANDEIRANTES", na=False)
+            remover = texto_geral.str.contains("GENERAL|FREDERICO", na=False)
+            condicao_excluir = filtro_5080400 & (~manter | remover)
+            df = df[~condicao_excluir]
+
+            df.drop(columns=["Código Numérico"], inplace=True)
+
+            colunas = ["Número da O.S.", "Código do Serviço", "Rua", "Número", "Bairro", "Data de Baixa", "Valor da O.S.", "Arquivo"]
+            df = df[colunas]
+
+            if not colunas_escritas:
+                ws.append(df.columns.tolist())
+                colunas_escritas = True
+
+            for row in dataframe_to_rows(df, index=False, header=False):
+                ws.append(row)
+
+            gc.collect()
+
         except Exception as e:
             print(f"❌ Erro ao processar {nome_arquivo}: {e}")
 
-    if not todos_dados:
-        print("Nenhum dado foi extraído.")
-        return
-
-    df_final = pd.concat(todos_dados, ignore_index=True)
-
-    def corrigir_valor(valor):
-        if valor:
-            return float(valor.replace(".", "").replace(",", "."))
-        return None
-
-    def formatar_os(valor):
-        if valor and valor.isdigit():
-            try:
-                return float(valor)
-            except:
-                return valor
-        return valor
-
-    df_final["Número da O.S."] = df_final["Número da O.S."].apply(formatar_os)
-    df_final["Valor da O.S."] = df_final["Valor da O.S."].apply(corrigir_valor)
-
-    df_final["Código Numérico"] = pd.to_numeric(df_final["Código Numérico"], errors='coerce')
-    df_final = df_final[(df_final["Código Numérico"].isna()) | (df_final["Código Numérico"] >= 3000000)]
-    df_final = df_final[~df_final["Código Numérico"].between(3020000, 3029999, inclusive='both')]
-    df_final = df_final[~df_final["Código Numérico"].between(5050000, 5050300, inclusive='both')]
-    df_final = df_final[~df_final["Código Numérico"].between(5050400, 5050499, inclusive='both')]
-    df_final = df_final[~df_final["Código Numérico"].between(5050401, 5050409, inclusive='both')]
-    df_final = df_final[df_final["Código Numérico"] != 5210100]
-
-    df_final = df_final[~df_final["Código Numérico"].isin([5120200, 5040700])]
-
-    codigos_alfanumericos_excluir = ["IRTVA", "MA001", "IRTRAA", "RDA001"]
-    for codigo in codigos_alfanumericos_excluir:
-        df_final = df_final[~df_final["Código do Serviço"].str.startswith(codigo, na=False)]
-
-    filtro_5080400 = df_final["Código Numérico"] == 5080400
-    texto_geral = (df_final["Rua"].fillna("") + " " + df_final["Bairro"].fillna("")).str.upper()
-    manter = texto_geral.str.contains("INDUSTRIAL|BANDEIRANTES", na=False)
-    remover = texto_geral.str.contains("GENERAL|FREDERICO", na=False)
-    condicao_excluir = filtro_5080400 & (~manter | remover)
-    df_final = df_final[~condicao_excluir]
-
-    df_final.sort_values(by=["Número da O.S.", "Arquivo"], ascending=[True, True], inplace=True)
-    df_final = df_final[~df_final.duplicated(subset="Número da O.S.", keep=False) | (df_final["Arquivo"] == "OSNP")]
-
-    df_final.drop(columns=["Código Numérico"], inplace=True)
-    colunas = ["Número da O.S.", "Código do Serviço", "Rua", "Número", "Bairro", "Data de Baixa", "Valor da O.S.", "Arquivo"]
-    df_final = df_final[colunas]
-
     caminho_excel = os.path.join(pasta_pdf, "informacoes_extraidas.xlsx")
-    df_final.to_excel(caminho_excel, index=False, sheet_name='Dados')
-
+    wb.save(caminho_excel)
     print(f"\n✅ Planilha salva com sucesso em:\n{caminho_excel}")
 
 if __name__ == '__main__':
