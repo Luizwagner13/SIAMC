@@ -63,6 +63,8 @@
         {% for nome, dados in users.items() %}
         <div class="card mb-3 shadow-sm">
             <div class="card-body">
+
+                <!-- Formulário de Atualizar -->
                 <form method="POST">
                     <input type="hidden" name="acao" value="editar">
                     <input type="hidden" name="username" value="{{ nome }}">
@@ -85,17 +87,18 @@
                         </div>
                     </div>
 
-                    <div class="d-flex justify-content-between">
-                        <button type="submit" class="btn btn-success"><i class="bi bi-save"></i> Atualizar</button>
-                        {% if nome != session['user'] %}
-                        <form method="POST" class="d-inline-block">
-                            <input type="hidden" name="acao" value="excluir">
-                            <input type="hidden" name="username" value="{{ nome }}">
-                            <button type="submit" class="btn btn-danger"><i class="bi bi-trash"></i> Excluir</button>
-                        </form>
-                        {% endif %}
-                    </div>
+                    <button type="submit" class="btn btn-success"><i class="bi bi-save"></i> Atualizar</button>
                 </form>
+
+                <!-- Formulário de Excluir -->
+                {% if nome != session['user'] %}
+                <form method="POST" class="mt-2">
+                    <input type="hidden" name="acao" value="excluir">
+                    <input type="hidden" name="username" value="{{ nome }}">
+                    <button type="submit" class="btn btn-danger"><i class="bi bi-trash"></i> Excluir</button>
+                </form>
+                {% endif %}
+
             </div>
         </div>
         {% endfor %}

@@ -4,9 +4,3 @@
     "valid_until": "2099-12-31",
     "is_admin": true
   },
-  "LUIZ": {
-    "password": "scrypt:32768:8:1$mW1FY320yRR4erLq$b6c4488a61e4b7930b1d3bbda0c7153dde861411afc4fd82e50b6f9d58bcf31052f2daea52ccb8bbb870e9ef659483e97933be3e72cf2865af68aa347176e688",
-    "valid_until": "2025-06-28",
-    "is_admin": false
-  }
-}
