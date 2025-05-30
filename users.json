@@ -3,4 +3,5 @@
     "password": "scrypt:32768:8:1$jAxjBILE9llyXkYX$b6aeac917455d19c13dc38004b3d61225a447f6e1597e085bf960316a8c2ca3d678f0b7c70f3ecc91f93d715f1290d298ac548e1d2c53aee730d6537b57365dd",
     "valid_until": "2099-12-31",
     "is_admin": true
-  },
+  }
+}
