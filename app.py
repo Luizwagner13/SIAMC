@@ -156,7 +156,8 @@ def baixar_medicao():
     user_folder = os.path.join('user_data', username)
     filepath = os.path.join(user_folder, 'medicao_atualizada.xlsx')
 
-    if not os.path.exists(filepath):
+    # MELHORIA: Verifica se o arquivo existe e tem conteúdo
+    if not os.path.exists(filepath) or os.path.getsize(filepath) == 0:
         flash('Nenhuma planilha de medição encontrada para download.', 'erro')
         return redirect(url_for('dashboard'))
 
@@ -174,8 +175,19 @@ def atualizar_medicao():
     caminho_pdf = os.path.join(user_folder, 'informacoes_extraidas.xlsx')
     caminho_medicao = os.path.join(user_folder, 'medicao_atualizada.xlsx')
 
+    # MELHORIA: Verifica se o arquivo de entrada existe antes de tentar atualizar
+    if not os.path.exists(caminho_pdf):
+        flash('Arquivo de informações extraídas não encontrado. Gere a planilha antes de atualizar.', 'erro')
+        return redirect(url_for('dashboard'))
+
     try:
         subprocess.run(['python', 'atualizar_medicao.py', caminho_pdf, caminho_medicao], check=True)
+
+        # Verifica se o arquivo gerado existe e não está vazio
+        if not os.path.exists(caminho_medicao) or os.path.getsize(caminho_medicao) == 0:
+            flash('Erro: a planilha de medição não foi gerada corretamente.', 'erro')
+            return redirect(url_for('dashboard'))
+
         flash('Medição atualizada com sucesso!', 'sucesso')
     except subprocess.CalledProcessError:
         flash('Erro ao atualizar a medição.', 'erro')
