@@ -98,7 +98,7 @@ def processar_pdfs_da_pasta(pasta_pdf):
             df = df[~df["Código Numérico"].between(5050400, 5050499, inclusive='both')]
             df = df[~df["Código Numérico"].between(5050401, 5050409, inclusive='both')]
             df = df[df["Código Numérico"] != 5210100]
-            df = df[~df["Código Numérico"].isin([5120200, 5040700])]
+            df = df[~df["Código Numérico"].isin([5120200, 5040700, 5300100, 5390100])]
 
             codigos_alfanumericos_excluir = ["IRTVA", "MA001", "IRTRAA", "RDA001"]
             for codigo in codigos_alfanumericos_excluir:

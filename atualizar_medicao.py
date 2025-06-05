@@ -118,8 +118,8 @@ for _, nova in df_novos.iterrows():
                 df_base.at[pos, col_obs] = "Valor pago atualizado após divergência"
         else:
             df_base.at[pos, col_status_base] = status_novo
-            # SOMENTE atualiza o VALOR DA O.S se ainda estiver vazio
-            if pd.isna(df_base.at[pos, col_valor_base]):
+            # Atualiza o VALOR DA O.S se o status NÃO for PAGO
+            if status_novo != "PAGO":
                 df_base.at[pos, col_valor_base] = valor_novo
             df_base.at[pos, col_valor_pago] = valor_novo if status_novo == "PAGO" else None
             df_base.at[pos, col_medido] = "MEDIDO" if status_novo == "PAGO" else "NÃO MEDIDO"
