@@ -4,3 +4,4 @@ pandas
 openpyxl
 pdfplumber
 gunicorn
+xlsxwriter
