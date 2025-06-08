@@ -7,7 +7,6 @@ import sys
 import gc
 import xlsxwriter
 
-
 logging.basicConfig(level=logging.ERROR)
 
 def extrair_texto_pdf(caminho_pdf):
@@ -81,7 +80,9 @@ def processar_pdfs_da_pasta(pasta_pdf):
     arquivos_pdf = [f for f in os.listdir(pasta_pdf) if f.lower().endswith('.pdf')]
     print(f"📄 Encontrados {len(arquivos_pdf)} arquivos PDF.")
 
-    caminho_excel = 'informacoes_extraidas.xlsx'
+    # ⚠️ Corrigido aqui
+    caminho_excel = os.path.join(pasta_pdf, 'informacoes_extraidas.xlsx')
+
     writer = pd.ExcelWriter(caminho_excel, engine='xlsxwriter')
     colunas_escritas = False
 
