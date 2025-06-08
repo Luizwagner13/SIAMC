@@ -80,11 +80,8 @@ def processar_pdfs_da_pasta(pasta_pdf):
     arquivos_pdf = [f for f in os.listdir(pasta_pdf) if f.lower().endswith('.pdf')]
     print(f"📄 Encontrados {len(arquivos_pdf)} arquivos PDF.")
 
-    # ⚠️ Corrigido aqui
     caminho_excel = os.path.join(pasta_pdf, 'informacoes_extraidas.xlsx')
-
-    writer = pd.ExcelWriter(caminho_excel, engine='xlsxwriter')
-    colunas_escritas = False
+    dfs_validos = []
 
     for nome_arquivo in arquivos_pdf:
         caminho_pdf = os.path.join(pasta_pdf, nome_arquivo)
@@ -122,17 +119,20 @@ def processar_pdfs_da_pasta(pasta_pdf):
             colunas = ["Número da O.S.", "Código do Serviço", "Rua", "Número", "Bairro", "Data de Baixa", "Valor da O.S.", "Arquivo"]
             df = df[colunas]
 
-            df.to_excel(writer, sheet_name='Dados', index=False, header=not colunas_escritas)
-            colunas_escritas = True
+            if not df.empty:
+                dfs_validos.append(df)
 
             gc.collect()
 
         except Exception as e:
             print(f"❌ Erro ao processar {nome_arquivo}: {e}")
 
-    writer.close()
-    print(f'✅ Planilha salva com sucesso em: {caminho_excel}')
-    print(f"\n✅ Planilha salva com sucesso em:\n{caminho_excel}")
+    if dfs_validos:
+        df_final = pd.concat(dfs_validos, ignore_index=True)
+        df_final.to_excel(caminho_excel, sheet_name='Dados', index=False, engine='xlsxwriter')
+        print(f"✅ Planilha salva com sucesso em: {caminho_excel}")
+    else:
+        print("⚠️ Nenhum dado válido encontrado. A planilha não foi gerada.")
 
 if __name__ == '__main__':
     if len(sys.argv) < 2:
