@@ -5,14 +5,20 @@ import os
 import logging
 import sys
 import gc
-from openpyxl import Workbook
-from openpyxl.utils.dataframe import dataframe_to_rows
+import xlsxwriter
+
 
 logging.basicConfig(level=logging.ERROR)
 
 def extrair_texto_pdf(caminho_pdf):
+    texto_total = []
     with pdfplumber.open(caminho_pdf) as pdf:
-        return ''.join(pagina.extract_text() for pagina in pdf.pages)
+        for pagina in pdf.pages:
+            texto = pagina.extract_text()
+            if texto:
+                texto_total.append(texto)
+            del texto
+    return ''.join(texto_total)
 
 def extrair_informacoes(texto):
     numeros_os = re.findall(r'N[º°]? Ordem Serviço:\s*([A-Z0-9]+)', texto)
@@ -75,9 +81,8 @@ def processar_pdfs_da_pasta(pasta_pdf):
     arquivos_pdf = [f for f in os.listdir(pasta_pdf) if f.lower().endswith('.pdf')]
     print(f"📄 Encontrados {len(arquivos_pdf)} arquivos PDF.")
 
-    wb = Workbook()
-    ws = wb.active
-    ws.title = 'Dados'
+    caminho_excel = os.path.join(pasta_pdf, 'informacoes_extraidas.xlsx')
+    writer = pd.ExcelWriter(caminho_excel, engine='xlsxwriter')
     colunas_escritas = False
 
     for nome_arquivo in arquivos_pdf:
@@ -116,20 +121,15 @@ def processar_pdfs_da_pasta(pasta_pdf):
             colunas = ["Número da O.S.", "Código do Serviço", "Rua", "Número", "Bairro", "Data de Baixa", "Valor da O.S.", "Arquivo"]
             df = df[colunas]
 
-            if not colunas_escritas:
-                ws.append(df.columns.tolist())
-                colunas_escritas = True
-
-            for row in dataframe_to_rows(df, index=False, header=False):
-                ws.append(row)
+            df.to_excel(writer, sheet_name='Dados', index=False, header=not colunas_escritas)
+            colunas_escritas = True
 
             gc.collect()
 
         except Exception as e:
             print(f"❌ Erro ao processar {nome_arquivo}: {e}")
 
-    caminho_excel = os.path.join(pasta_pdf, "informacoes_extraidas.xlsx")
-    wb.save(caminho_excel)
+    writer.close()
     print(f"\n✅ Planilha salva com sucesso em:\n{caminho_excel}")
 
 if __name__ == '__main__':
