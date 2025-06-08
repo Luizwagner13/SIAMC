@@ -81,7 +81,7 @@ def processar_pdfs_da_pasta(pasta_pdf):
     arquivos_pdf = [f for f in os.listdir(pasta_pdf) if f.lower().endswith('.pdf')]
     print(f"📄 Encontrados {len(arquivos_pdf)} arquivos PDF.")
 
-    caminho_excel = os.path.join(pasta_pdf, 'informacoes_extraidas.xlsx')
+    caminho_excel = 'informacoes_extraidas.xlsx'
     writer = pd.ExcelWriter(caminho_excel, engine='xlsxwriter')
     colunas_escritas = False
 
@@ -130,6 +130,7 @@ def processar_pdfs_da_pasta(pasta_pdf):
             print(f"❌ Erro ao processar {nome_arquivo}: {e}")
 
     writer.close()
+    print(f'✅ Planilha salva com sucesso em: {caminho_excel}')
     print(f"\n✅ Planilha salva com sucesso em:\n{caminho_excel}")
 
 if __name__ == '__main__':
