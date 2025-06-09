@@ -42,7 +42,7 @@
 
         <!-- Uploads -->
         <div class="row mb-4">
-            <div class="col-md-6">
+            <div class="col-md-4">
                 <div class="card shadow-sm">
                     <div class="card-body">
                         <h5 class="card-title"><i class="bi bi-file-earmark-arrow-up"></i> Enviar PDFs</h5>
@@ -53,13 +53,26 @@
                     </div>
                 </div>
             </div>
-            <div class="col-md-6">
+            
+            <div class="col-md-4">
                 <div class="card shadow-sm">
                     <div class="card-body">
                         <h5 class="card-title"><i class="bi bi-upload"></i> Substituir Medição</h5>
                         <form action="{{ url_for('upload_medicao') }}" method="POST" enctype="multipart/form-data">
                             <input type="file" name="medicao" accept=".xlsx" class="form-control mb-3" required>
                             <button type="submit" class="btn btn-warning w-100">Substituir Planilha</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Novo card para dividir PDF -->
+            <div class="col-md-4">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title"><i class="bi bi-file-earmark-break"></i> Dividir PDF Grande</h5>
+                        <form action="{{ url_for('dividir_pdf_route') }}" method="GET">
+                            <button type="submit" class="btn btn-info w-100">Ir para Dividir PDF</button>
                         </form>
                     </div>
                 </div>
