@@ -10,7 +10,6 @@ app.secret_key = 'segredo123'
 
 USERS_FILE = 'users.json'
 
-# Carrega os usuários do arquivo (ou cria um novo)
 if os.path.exists(USERS_FILE):
     with open(USERS_FILE, 'r') as f:
         users = json.load(f)
@@ -121,7 +120,14 @@ def criar_planilha():
     username = session['user']
     user_folder = os.path.join('user_data', username)
 
-    subprocess.run(['python', 'extrair_informacoes.py', user_folder])
+    # ✅ Aqui está a modificação: subprocess com logs
+    resultado = subprocess.run(
+        ['python', 'extrair_informacoes.py', user_folder],
+        capture_output=True,
+        text=True
+    )
+    print("📤 STDOUT:", resultado.stdout)
+    print("⚠️ STDERR:", resultado.stderr)
 
     for filename in os.listdir(user_folder):
         if filename.endswith('.pdf'):
@@ -156,7 +162,6 @@ def baixar_medicao():
     user_folder = os.path.join('user_data', username)
     filepath = os.path.join(user_folder, 'medicao_atualizada.xlsx')
 
-    # MELHORIA: Verifica se o arquivo existe e tem conteúdo
     if not os.path.exists(filepath) or os.path.getsize(filepath) == 0:
         flash('Nenhuma planilha de medição encontrada para download.', 'erro')
         return redirect(url_for('dashboard'))
@@ -175,7 +180,6 @@ def atualizar_medicao():
     caminho_pdf = os.path.join(user_folder, 'informacoes_extraidas.xlsx')
     caminho_medicao = os.path.join(user_folder, 'medicao_atualizada.xlsx')
 
-    # MELHORIA: Verifica se o arquivo de entrada existe antes de tentar atualizar
     if not os.path.exists(caminho_pdf):
         flash('Arquivo de informações extraídas não encontrado. Gere a planilha antes de atualizar.', 'erro')
         return redirect(url_for('dashboard'))
@@ -183,7 +187,6 @@ def atualizar_medicao():
     try:
         subprocess.run(['python', 'atualizar_medicao.py', caminho_pdf, caminho_medicao], check=True)
 
-        # Verifica se o arquivo gerado existe e não está vazio
         if not os.path.exists(caminho_medicao) or os.path.getsize(caminho_medicao) == 0:
             flash('Erro: a planilha de medição não foi gerada corretamente.', 'erro')
             return redirect(url_for('dashboard'))

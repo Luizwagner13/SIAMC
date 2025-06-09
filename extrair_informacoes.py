@@ -7,17 +7,24 @@ import sys
 import gc
 import xlsxwriter
 
-logging.basicConfig(level=logging.ERROR)
+logging.basicConfig(level=logging.DEBUG)
 
 def extrair_texto_pdf(caminho_pdf):
     texto_total = []
-    with pdfplumber.open(caminho_pdf) as pdf:
-        for pagina in pdf.pages:
-            texto = pagina.extract_text()
-            if texto:
-                texto_total.append(texto)
-            del texto
-    return ''.join(texto_total)
+    try:
+        with pdfplumber.open(caminho_pdf) as pdf:
+            for i, pagina in enumerate(pdf.pages):
+                texto = pagina.extract_text()
+                if i == 0:
+                    print("📃 Primeiras linhas da 1ª página:")
+                    print(texto[:500] if texto else '❌ Nada extraído.')
+                if texto:
+                    texto_total.append(texto)
+                del texto
+        return ''.join(texto_total)
+    except Exception as e:
+        print(f"❌ Erro ao abrir ou ler o PDF {caminho_pdf}: {e}")
+        return ""
 
 def extrair_informacoes(texto):
     numeros_os = re.findall(r'N[º°]? Ordem Serviço:\s*([A-Z0-9]+)', texto)
@@ -78,7 +85,7 @@ def formatar_os(valor):
 
 def processar_pdfs_da_pasta(pasta_pdf):
     arquivos_pdf = [f for f in os.listdir(pasta_pdf) if f.lower().endswith('.pdf')]
-    print(f"📄 Encontrados {len(arquivos_pdf)} arquivos PDF.")
+    print(f"📄 Encontrados {len(arquivos_pdf)} arquivos PDF na pasta '{pasta_pdf}'.")
 
     caminho_excel = os.path.join(pasta_pdf, 'informacoes_extraidas.xlsx')
     dfs_validos = []
@@ -88,6 +95,8 @@ def processar_pdfs_da_pasta(pasta_pdf):
         print(f"🚀 Processando: {nome_arquivo}")
         try:
             texto = extrair_texto_pdf(caminho_pdf)
+            if not texto:
+                print(f"⚠️ Nenhum texto extraído do PDF: {nome_arquivo}")
             df = extrair_informacoes(texto)
             df["Arquivo"] = os.path.splitext(nome_arquivo)[0].upper()
 
@@ -127,16 +136,20 @@ def processar_pdfs_da_pasta(pasta_pdf):
         except Exception as e:
             print(f"❌ Erro ao processar {nome_arquivo}: {e}")
 
-    if dfs_validos:
-        df_final = pd.concat(dfs_validos, ignore_index=True)
+    # Sempre salvar planilha, mesmo que esteja vazia
+    df_final = pd.concat(dfs_validos, ignore_index=True) if dfs_validos else pd.DataFrame(columns=[
+        "Número da O.S.", "Código do Serviço", "Rua", "Número", "Bairro", "Data de Baixa", "Valor da O.S.", "Arquivo"
+    ])
+    try:
         df_final.to_excel(caminho_excel, sheet_name='Dados', index=False, engine='xlsxwriter')
         print(f"✅ Planilha salva com sucesso em: {caminho_excel}")
-    else:
-        print("⚠️ Nenhum dado válido encontrado. A planilha não foi gerada.")
+    except Exception as e:
+        print(f"❌ Erro ao salvar a planilha: {e}")
 
 if __name__ == '__main__':
     if len(sys.argv) < 2:
         print("⚠️ Por favor, forneça o caminho da pasta como argumento.")
         sys.exit(1)
     pasta_pdf = sys.argv[1]
+    print(f"🟢 Iniciando processamento para: {pasta_pdf}")
     processar_pdfs_da_pasta(pasta_pdf)
