@@ -41,20 +41,36 @@
 
         <div class="card shadow-sm mb-4">
             <div class="card-body">
-                <h5 class="card-title"><i class="bi bi-file-earmark-arrow-up"></i> Dividir PDF</h5>
-                <form action="{{ url_for('dividir_pdf_bp.dividir_pdf_route') }}" method="POST" enctype="multipart/form-data">
+                <h5 class="card-title"><i class="bi bi-file-earmark-break"></i> Dividir PDF Grande</h5>
+                <form action="{{ url_for('dividir_pdf_bp.dividir_pdf_route') }}" method="POST" enctype="multipart/form-data" onsubmit="handleSubmit(this)">
                     <div class="mb-3">
-                        <label for="pdf_file" class="form-label">Selecione o arquivo PDF para dividir</label>
-                        <input type="file" class="form-control" id="pdf_file" name="pdf_file" accept=".pdf" required>
+                        <label for="pdf_file" class="form-label">Selecione o arquivo PDF</label>
+                        <input type="file" class="form-control" id="pdf_file" name="pdf" accept=".pdf" required>
                     </div>
-                    <button type="submit" class="btn btn-primary w-100">Dividir PDF</button>
+                    <button type="submit" class="btn btn-primary w-100">
+                        <span class="spinner-border spinner-border-sm me-2 d-none" role="status" aria-hidden="true"></span>
+                        Dividir PDF
+                    </button>
                 </form>
             </div>
         </div>
 
-        <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">Voltar ao Dashboard</a>
+        <div class="text-center">
+            <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Voltar ao Dashboard
+            </a>
+        </div>
 
     </div>
+
+    <script>
+        function handleSubmit(form) {
+            const button = form.querySelector('button');
+            const spinner = button.querySelector('.spinner-border');
+            spinner.classList.remove('d-none');
+            button.disabled = true;
+        }
+    </script>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
