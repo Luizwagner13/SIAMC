@@ -5,13 +5,10 @@ import subprocess
 import json
 from datetime import datetime
 
-# Importa o blueprint do dividir_pdf
 from dividir_pdf import dividir_pdf_bp  
 
 app = Flask(__name__)
 app.secret_key = 'segredo123'
-
-# Registra o blueprint para dividir_pdf
 app.register_blueprint(dividir_pdf_bp)
 
 USERS_FILE = 'users.json'
@@ -126,13 +123,26 @@ def criar_planilha():
     username = session['user']
     user_folder = os.path.join('user_data', username)
 
-    resultado = subprocess.run(
-        ['python', 'extrair_informacoes.py', user_folder],
-        capture_output=True,
-        text=True
-    )
-    print("📤 STDOUT:", resultado.stdout)
-    print("⚠️ STDERR:", resultado.stderr)
+    try:
+        resultado = subprocess.run(
+            ['python', 'extrair_informacoes.py', user_folder],
+            capture_output=True,
+            text=True,
+            timeout=300
+        )
+        print("📤 STDOUT:", resultado.stdout)
+        print("⚠️ STDERR:", resultado.stderr)
+
+        if resultado.returncode != 0:
+            flash('Erro ao gerar a planilha. Verifique os dados enviados.', 'erro')
+            return redirect(url_for('dashboard'))
+
+    except subprocess.TimeoutExpired:
+        flash('A criação da planilha excedeu o tempo limite (5 minutos).', 'erro')
+        return redirect(url_for('dashboard'))
+    except subprocess.CalledProcessError:
+        flash('Erro ao executar o script de criação da planilha.', 'erro')
+        return redirect(url_for('dashboard'))
 
     for filename in os.listdir(user_folder):
         if filename.endswith('.pdf'):
@@ -190,13 +200,20 @@ def atualizar_medicao():
         return redirect(url_for('dashboard'))
 
     try:
-        subprocess.run(['python', 'atualizar_medicao.py', caminho_pdf, caminho_medicao], check=True)
+        subprocess.run(
+            ['python', 'atualizar_medicao.py', caminho_pdf, caminho_medicao],
+            check=True,
+            timeout=300
+        )
 
         if not os.path.exists(caminho_medicao) or os.path.getsize(caminho_medicao) == 0:
             flash('Erro: a planilha de medição não foi gerada corretamente.', 'erro')
             return redirect(url_for('dashboard'))
 
         flash('Medição atualizada com sucesso!', 'sucesso')
+
+    except subprocess.TimeoutExpired:
+        flash('A atualização da medição excedeu o tempo limite (5 minutos).', 'erro')
     except subprocess.CalledProcessError:
         flash('Erro ao atualizar a medição.', 'erro')
 
@@ -263,7 +280,6 @@ def admin():
 
     return render_template('admin.html', users=users)
 
-# Rota inicial para dividir PDF só para teste rápido, você pode criar link na navbar se quiser
 @app.route('/dividir_pdf_link')
 def dividir_pdf_link():
     return redirect(url_for('dividir_pdf_bp.dividir_pdf_route'))
