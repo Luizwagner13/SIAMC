@@ -22,13 +22,17 @@
             text-align: center;
             margin-bottom: 1.5rem;
         }
-        select, button {
+        label, select, input {
+            display: block;
             width: 100%;
+            margin-top: 1rem;
+            font-size: 1rem;
+        }
+        button {
+            width: 48%;
             padding: 1rem;
             font-size: 1rem;
             margin-top: 1rem;
-        }
-        button {
             background-color: #198754;
             color: white;
             border: none;
@@ -38,7 +42,49 @@
         button:hover {
             background-color: #157347;
         }
+        #extras {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: #e9ecef;
+            border-radius: 5px;
+            display: none; /* escondido por padrão */
+        }
+        table {
+            width: 100%;
+            margin-top: 2rem;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid #dee2e6;
+            padding: 0.5rem;
+            text-align: center;
+        }
+        th {
+            background-color: #198754;
+            color: white;
+        }
     </style>
+    <script>
+        function mostrarCamposExtras() {
+            const codigoSelect = document.getElementById('codigo');
+            const extras = document.getElementById('extras');
+
+            if (codigoSelect.value === '313') {
+                extras.style.display = 'block';
+            } else {
+                extras.style.display = 'none';
+                // limpa campos extras quando esconde
+                document.getElementById('pavimento').value = '';
+                document.getElementById('troca').value = '';
+                document.getElementById('profundidade').value = '';
+            }
+        }
+
+        window.onload = function() {
+            mostrarCamposExtras();
+            document.getElementById('codigo').addEventListener('change', mostrarCamposExtras);
+        };
+    </script>
 </head>
 <body>
     <div class="container">
@@ -50,8 +96,49 @@
                     <option value="{{ codigo }}">{{ codigo }}</option>
                 {% endfor %}
             </select>
-            <button type="submit">Confirmar</button>
+
+            <div id="extras">
+                <label for="pavimento">Pavimento:</label>
+                <input type="text" name="pavimento" id="pavimento" placeholder="Informe o pavimento">
+
+                <label for="troca">Troca:</label>
+                <input type="text" name="troca" id="troca" placeholder="Informe a troca">
+
+                <label for="profundidade">Profundidade:</label>
+                <input type="text" name="profundidade" id="profundidade" placeholder="Informe a profundidade">
+            </div>
+
+            <div style="display:flex; justify-content: space-between;">
+                <button type="submit" name="add_codigo">Adicionar Código</button>
+                <button type="submit" name="finalizar">Codificar</button>
+            </div>
         </form>
+
+        {% if codigos_adicionados %}
+            <h2>Códigos Adicionados</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Código</th>
+                        <th>Pavimento</th>
+                        <th>Troca</th>
+                        <th>Profundidade</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in codigos_adicionados %}
+                    <tr>
+                        <td>{{ item.codigo }}</td>
+                        <td>{{ item.pavimento if item.pavimento else '-' }}</td>
+                        <td>{{ item.troca if item.troca else '-' }}</td>
+                        <td>{{ item.profundidade if item.profundidade else '-' }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>Nenhum código adicionado ainda.</p>
+        {% endif %}
     </div>
 </body>
 </html>
