@@ -284,7 +284,7 @@ def admin():
 def dividir_pdf_link():
     return redirect(url_for('dividir_pdf_bp.dividir_pdf_route'))
 
-# Rota codificar atualizada com lógica pra adicionar múltiplos códigos com campos extras
+# Rota codificar atualizada com lógica pra adicionar múltiplos códigos com campos extras para 313 e 320 (rec)
 @app.route('/codificar', methods=['GET', 'POST'])
 def codificar():
     if 'user' not in session:
@@ -292,58 +292,32 @@ def codificar():
         return redirect(url_for('login'))
 
     codigos_disponiveis = [
-        '313', '319', '321',
-        '320 (rec)', '300',
-        '343', '329'
+        '313', '319', '320 (rec)', '321', '322', '323', '324',
+        '325', '326', '327', '328', '329', '330', '331'
     ]
 
-    # Inicializa a lista de codigos adicionados na sessão
-    if 'codigos_adicionados' not in session:
-        session['codigos_adicionados'] = []
-
     if request.method == 'POST':
-        if 'add_codigo' in request.form:
-            # Botão "Adicionar código" apertado
-            codigo = request.form.get('codigo')
-            pavimento = request.form.get('pavimento')
-            troca = request.form.get('troca')
-            profundidade = request.form.get('profundidade')
+        selected_codigos = request.form.getlist('codigo')
+        pavimento = request.form.get('pavimento')
+        troca = request.form.get('troca')
+        profundidade = request.form.get('profundidade')
 
-            # Só adiciona se código foi selecionado
-            if codigo:
-                novo_item = {'codigo': codigo}
-
-                # Se for código 313, adiciona os campos extras preenchidos
-                if codigo == '313':
-                    novo_item['pavimento'] = pavimento
-                    novo_item['troca'] = troca
-                    novo_item['profundidade'] = profundidade
-
-                # Pode adicionar lógica para outros códigos se precisar
-
-                # Adiciona à lista de codigos adicionados na sessão
-                codigos = session['codigos_adicionados']
-                codigos.append(novo_item)
-                session['codigos_adicionados'] = codigos
-                flash(f'Código {codigo} adicionado.', 'sucesso')
+        linhas_codificadas = []
+        for codigo in selected_codigos:
+            if codigo == '313':
+                linha = f'{codigo};{pavimento or ""};{troca or ""}'
+                linhas_codificadas.append(linha)
+            elif codigo == '320 (rec)':
+                linha = f'{codigo};{pavimento or ""};{troca or ""};{profundidade or ""}'
+                linhas_codificadas.append(linha)
             else:
-                flash('Selecione um código para adicionar.', 'erro')
+                linhas_codificadas.append(codigo)
 
-            return redirect(url_for('codificar'))
+        texto_codificado = '\n'.join(linhas_codificadas)
+        flash('Códigos codificados com sucesso!', 'sucesso')
+        return render_template('codificar.html', codigos=codigos_disponiveis, texto_codificado=texto_codificado)
 
-        elif 'finalizar' in request.form:
-            # Botão "Codificar" apertado - aqui você processaria a lista completa
-            codigos = session.get('codigos_adicionados', [])
-
-            # Por enquanto só printa no console (depois a gente faz a lógica)
-            print("Codigos para codificar:", codigos)
-
-            # Limpa a lista após codificar
-            session.pop('codigos_adicionados', None)
-            flash('Codificação finalizada com sucesso!', 'sucesso')
-            return redirect(url_for('dashboard'))
-
-    return render_template('codificar.html', codigos=codigos_disponiveis, codigos_adicionados=session['codigos_adicionados'])
+    return render_template('codificar.html', codigos=codigos_disponiveis, texto_codificado=None)
 
 if __name__ == '__main__':
     app.run(debug=True)

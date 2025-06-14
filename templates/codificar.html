@@ -66,17 +66,65 @@
     </style>
     <script>
         function mostrarCamposExtras() {
-            const codigoSelect = document.getElementById('codigo');
+            const codigo = document.getElementById('codigo').value;
             const extras = document.getElementById('extras');
 
-            if (codigoSelect.value === '313') {
+            // Resetar tudo antes
+            extras.style.display = 'none';
+            document.getElementById('pavimento').style.display = 'none';
+            document.getElementById('troca').style.display = 'none';
+            document.getElementById('profundidade').style.display = 'none';
+            document.getElementById('diametro').style.display = 'none';
+
+            document.getElementById('pavimento_label').style.display = 'none';
+            document.getElementById('troca_label').style.display = 'none';
+            document.getElementById('profundidade_label').style.display = 'none';
+            document.getElementById('diametro_label').style.display = 'none';
+
+            if (['313','319','321','320','343'].includes(codigo)) {
                 extras.style.display = 'block';
+
+                if (codigo === '313') {
+                    // PAVIMENTO / PROFUNDIDADE (sem TROCA)
+                    document.getElementById('pavimento').style.display = 'block';
+                    document.getElementById('pavimento_label').style.display = 'block';
+
+                    document.getElementById('profundidade').style.display = 'block';
+                    document.getElementById('profundidade_label').style.display = 'block';
+                } else if (codigo === '319' || codigo === '321') {
+                    // PAVIMENTO / TROCA / PROFUNDIDADE
+                    document.getElementById('pavimento').style.display = 'block';
+                    document.getElementById('pavimento_label').style.display = 'block';
+
+                    document.getElementById('troca').style.display = 'block';
+                    document.getElementById('troca_label').style.display = 'block';
+
+                    document.getElementById('profundidade').style.display = 'block';
+                    document.getElementById('profundidade_label').style.display = 'block';
+                } else if (codigo === '320') {
+                    // DIÂMETRO / PROFUNDIDADE / PAVIMENTO
+                    document.getElementById('diametro').style.display = 'block';
+                    document.getElementById('diametro_label').style.display = 'block';
+
+                    document.getElementById('profundidade').style.display = 'block';
+                    document.getElementById('profundidade_label').style.display = 'block';
+
+                    document.getElementById('pavimento').style.display = 'block';
+                    document.getElementById('pavimento_label').style.display = 'block';
+                } else if (codigo === '343') {
+                    // DIÂMETRO / PROFUNDIDADE
+                    document.getElementById('diametro').style.display = 'block';
+                    document.getElementById('diametro_label').style.display = 'block';
+
+                    document.getElementById('profundidade').style.display = 'block';
+                    document.getElementById('profundidade_label').style.display = 'block';
+                }
             } else {
-                extras.style.display = 'none';
-                // limpa campos extras quando esconde
+                // Se for outro código, esconde extras e limpa campos
                 document.getElementById('pavimento').value = '';
                 document.getElementById('troca').value = '';
                 document.getElementById('profundidade').value = '';
+                document.getElementById('diametro').value = '';
             }
         }
 
@@ -98,14 +146,17 @@
             </select>
 
             <div id="extras">
-                <label for="pavimento">Pavimento:</label>
+                <label for="pavimento" id="pavimento_label">Pavimento:</label>
                 <input type="text" name="pavimento" id="pavimento" placeholder="Informe o pavimento">
 
-                <label for="troca">Troca:</label>
+                <label for="troca" id="troca_label">Troca:</label>
                 <input type="text" name="troca" id="troca" placeholder="Informe a troca">
 
-                <label for="profundidade">Profundidade:</label>
+                <label for="profundidade" id="profundidade_label">Profundidade:</label>
                 <input type="text" name="profundidade" id="profundidade" placeholder="Informe a profundidade">
+
+                <label for="diametro" id="diametro_label">Diâmetro:</label>
+                <input type="text" name="diametro" id="diametro" placeholder="Informe o diâmetro">
             </div>
 
             <div style="display:flex; justify-content: space-between;">
@@ -123,6 +174,7 @@
                         <th>Pavimento</th>
                         <th>Troca</th>
                         <th>Profundidade</th>
+                        <th>Diâmetro</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -132,6 +184,7 @@
                         <td>{{ item.pavimento if item.pavimento else '-' }}</td>
                         <td>{{ item.troca if item.troca else '-' }}</td>
                         <td>{{ item.profundidade if item.profundidade else '-' }}</td>
+                        <td>{{ item.diametro if item.diametro else '-' }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>
