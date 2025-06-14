@@ -284,7 +284,7 @@ def admin():
 def dividir_pdf_link():
     return redirect(url_for('dividir_pdf_bp.dividir_pdf_route'))
 
-# Rota codificar atualizada com lógica pra adicionar múltiplos códigos com campos extras para 313 e 320 (rec)
+# Rota codificar atualizada com sessão para múltiplos códigos e campos extras
 @app.route('/codificar', methods=['GET', 'POST'])
 def codificar():
     if 'user' not in session:
@@ -296,26 +296,35 @@ def codificar():
         '325', '326', '327', '328', '329', '330', '331'
     ]
 
-    if request.method == 'POST':
-        selected_codigos = request.form.getlist('codigo')
-        pavimento = request.form.get('pavimento')
-        troca = request.form.get('troca')
-        profundidade = request.form.get('profundidade')
+    if 'codigos_adicionados' not in session:
+        session['codigos_adicionados'] = []
 
-        linhas_codificadas = []
-        for codigo in selected_codigos:
+    if request.method == 'POST':
+        if 'adicionar_codigo' in request.form:
+            codigo = request.form.get('codigo')
+            pavimento = request.form.get('pavimento')
+            troca = request.form.get('troca')
+            profundidade = request.form.get('profundidade')
+
             if codigo == '313':
                 linha = f'{codigo};{pavimento or ""};{troca or ""}'
-                linhas_codificadas.append(linha)
             elif codigo == '320 (rec)':
                 linha = f'{codigo};{pavimento or ""};{troca or ""};{profundidade or ""}'
-                linhas_codificadas.append(linha)
             else:
-                linhas_codificadas.append(codigo)
+                linha = codigo
 
-        texto_codificado = '\n'.join(linhas_codificadas)
-        flash('Códigos codificados com sucesso!', 'sucesso')
-        return render_template('codificar.html', codigos=codigos_disponiveis, texto_codificado=texto_codificado)
+            codigos_atualizados = session['codigos_adicionados']
+            codigos_atualizados.append(linha)
+            session['codigos_adicionados'] = codigos_atualizados
+
+            flash('Código adicionado!', 'sucesso')
+            return redirect(url_for('codificar'))
+
+        elif 'finalizar' in request.form:
+            texto_codificado = '\n'.join(session.get('codigos_adicionados', []))
+            flash('Códigos finalizados!', 'sucesso')
+            session.pop('codigos_adicionados', None)
+            return render_template('codificar.html', codigos=codigos_disponiveis, texto_codificado=texto_codificado)
 
     return render_template('codificar.html', codigos=codigos_disponiveis, texto_codificado=None)
 
