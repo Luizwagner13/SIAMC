@@ -284,5 +284,24 @@ def admin():
 def dividir_pdf_link():
     return redirect(url_for('dividir_pdf_bp.dividir_pdf_route'))
 
+# NOVA ROTA ADICIONADA AQUI 👇
+@app.route('/codificar', methods=['GET', 'POST'])
+def codificar():
+    if 'user' not in session:
+        flash('Faça login para acessar a codificação.', 'erro')
+        return redirect(url_for('login'))
+
+    codigos_disponiveis = [
+        '313 codigos', '319 codigos', '321 codigos',
+        '320 (rec) codigos', '300 codigos',
+        '343 codigos', '329 codigos'
+    ]
+
+    if request.method == 'POST':
+        codigo_selecionado = request.form.get('codigo')
+        return redirect(url_for('dashboard'))  # por enquanto só redireciona de volta
+
+    return render_template('codificar.html', codigos=codigos_disponiveis)
+
 if __name__ == '__main__':
     app.run(debug=True)

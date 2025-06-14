@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Codificar Ordens de Serviço</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f8f9fa;
+            padding: 2rem;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #fff;
+            border-radius: 10px;
+            padding: 2rem;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+        select, button {
+            width: 100%;
+            padding: 1rem;
+            font-size: 1rem;
+            margin-top: 1rem;
+        }
+        button {
+            background-color: #198754;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #157347;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Codificar Ordens de Serviço</h1>
+        <form method="POST">
+            <label for="codigo">Escolha o código desejado:</label>
+            <select name="codigo" id="codigo" required>
+                {% for codigo in codigos %}
+                    <option value="{{ codigo }}">{{ codigo }}</option>
+                {% endfor %}
+            </select>
+            <button type="submit">Confirmar</button>
+        </form>
+    </div>
+</body>
+</html>
