@@ -8,7 +8,6 @@ def processar_codigos(lista_itens_adicionados):
     output_final = []
 
     # Tabela de mapeamento para os códigos 319 e seus excedentes
-    # Formato: { 'PAVIMENTO': { 'TROCA': { 'profundidades_base': { (min_prof, max_prof): 'CODIGO' }, 'codigo_excedente_mts': 'CODIGO' } } }
     tabela_319 = {
         'PASSEIO': {
             'SEM TROCA': {
@@ -100,7 +99,9 @@ def processar_codigos(lista_itens_adicionados):
     }
 
 
+    print(f"DEBUG: Processando {len(lista_itens_adicionados)} itens.")
     for item in lista_itens_adicionados:
+        print(f"DEBUG: Processando item: {item}")
         codigo_input = item.get('codigo')
         
         # --- Lógica para o código 313 ---
@@ -112,7 +113,6 @@ def processar_codigos(lista_itens_adicionados):
                 profundidade_input = 0.0 
 
             codigo_gerado = None
-            # Mapeamento de 313: PAVIMENTO -> PROFUNDIDADE -> CODIGO
             mapa_313 = {
                 'CIMENTO': {
                     (0.0, 1.25): '3078',
@@ -134,8 +134,11 @@ def processar_codigos(lista_itens_adicionados):
             
             if codigo_gerado:
                 output_final.append(f'{codigo_gerado} - 1 unidade')
+                print(f"DEBUG: 313 - Código gerado: {codigo_gerado}")
             else:
-                output_final.append(f'313 - Erro: Não foi possível determinar o código para Pavimento: {item.get("pavimento")}, Profundidade: {item.get("profundidade")}. Verifique os valores.')
+                error_msg = f'313 - Erro: Não foi possível determinar o código para Pavimento: {item.get("pavimento")}, Profundidade: {item.get("profundidade")}. Verifique os valores.')
+                output_final.append(error_msg)
+                print(f"DEBUG: 313 - ERRO: {error_msg}")
         
         # --- Lógica para o código 319 ---
         elif codigo_input == '319':
@@ -145,19 +148,18 @@ def processar_codigos(lista_itens_adicionados):
             try:
                 profundidade_input = float(item.get('profundidade', '').replace(',', '.') or 0.0)
             except ValueError:
-                profundidade_input = 0.0 # Valor padrão para profundidade inválida
+                profundidade_input = 0.0 
+                print(f"DEBUG: 319 - Profundidade inválida: {item.get('profundidade')}, usando 0.0")
 
             try:
-                # O novo campo mts_tubo_batido
                 mts_tubo_batido_input = float(item.get('mts_tubo_batido', '').replace(',', '.') or 0.0)
             except ValueError:
-                mts_tubo_batido_input = 0.0 # Valor padrão para mts_tubo_batido inválido
+                mts_tubo_batido_input = 0.0 
+                print(f"DEBUG: 319 - MTS Tubo Batido inválido: {item.get('mts_tubo_batido')}, usando 0.0")
 
-            # Validar se a combinação Pavimento/Troca existe na tabela
             if pavimento_input in tabela_319 and troca_input in tabela_319[pavimento_input]:
                 regras = tabela_319[pavimento_input][troca_input]
                 
-                # 1. Determinar o CÓDIGO BASE pela profundidade
                 codigo_base = None
                 for (min_prof, max_prof), cod in regras['profundidades_base'].items():
                     if min_prof <= profundidade_input <= max_prof:
@@ -165,31 +167,39 @@ def processar_codigos(lista_itens_adicionados):
                         break
                 
                 if not codigo_base:
-                    # Se a profundidade for maior que a máxima definida (5.00m), ainda usa o último código da faixa
                     if profundidade_input > 5.00:
-                        # Pega o último código base da faixa (ex: 3813 para Passeio/Sem Troca)
                         codigo_base = list(regras['profundidades_base'].values())[-1] 
                         output_final.append(f'{codigo_base} - 1 UNIDADE (Profundidade > 5.00m)')
+                        print(f"DEBUG: 319 - Profundidade > 5.00m, usando código base: {codigo_base}")
                     else:
-                        output_final.append(f'319 - Erro: Profundidade "{item.get("profundidade")}" fora das faixas para Pavimento: {item.get("pavimento")}, Troca: {item.get("troca")}')
-                        continue # Pula para o próximo item
+                        error_msg = f'319 - Erro: Profundidade "{item.get("profundidade")}" fora das faixas para Pavimento: {item.get("pavimento")}, Troca: {item.get("troca")}'
+                        output_final.append(error_msg)
+                        print(f"DEBUG: 319 - ERRO: {error_msg}")
                 else:
                     output_final.append(f'{codigo_base} - 1 UNIDADE')
+                    print(f"DEBUG: 319 - Código base determinado: {codigo_base}")
 
-                # 2. Lógica para o EXCEDENTE de MTS DE TUBO BATIDO
-                if mts_tubo_batido_input > 2.00: # Se exceder 2.00mts
+                if mts_tubo_batido_input > 2.00:
                     codigo_excedente = regras['codigo_excedente_mts']
                     quantidade_excedente = mts_tubo_batido_input - 2.00
-                    # Formata o excedente para duas casas decimais
                     output_final.append(f'{codigo_excedente} - {quantidade_excedente:.2f} MTS')
+                    print(f"DEBUG: 319 - Excedente gerado: {codigo_excedente} - {quantidade_excedente:.2f} MTS")
 
             else:
-                output_final.append(f'319 - Erro: Combinação Pavimento "{item.get("pavimento")}" / Troca "{item.get("troca")}" não encontrada na tabela.')
+                error_msg = f'319 - Erro: Combinação Pavimento "{item.get("pavimento")}" / Troca "{item.get("troca")}" não encontrada na tabela.'
+                output_final.append(error_msg)
+                print(f"DEBUG: 319 - ERRO: {error_msg}")
 
         # --- Lógica para outros códigos (ainda não implementada) ---
         else:
             output_final.append(f'{codigo_input} - Lógica de codificação pendente.')
+            print(f"DEBUG: Código {codigo_input} - Lógica pendente.")
             
+    if not output_final:
+        output_final.append("Nenhum código válido foi gerado. Verifique os inputs.")
+        print("DEBUG: Nenhum código válido foi gerado.")
+            
+    print(f"DEBUG: Final output_final antes do retorno: {output_final}")
     return output_final
 
 if __name__ == '__main__':
