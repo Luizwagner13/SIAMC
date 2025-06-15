@@ -5,8 +5,8 @@ import subprocess
 import json
 from datetime import datetime
 
-from dividir_pdf import dividir_pdf_bp  
-from processar_codificacao import processar_codigos 
+from dividir_pdf import dividir_pdf_bp
+from processar_codificacao import processar_codigos # Esta importação é crucial para chamar a função
 
 app = Flask(__name__)
 app.secret_key = 'segredo123'
@@ -285,7 +285,7 @@ def admin():
 def dividir_pdf_link():
     return redirect(url_for('dividir_pdf_bp.dividir_pdf_route'))
 
-# Rota codificar atualizada
+# Rota codificar atualizada com sessão para múltiplos códigos e campos extras
 @app.route('/codificar', methods=['GET', 'POST'])
 def codificar():
     if 'user' not in session:
@@ -294,20 +294,19 @@ def codificar():
 
     codigos_disponiveis = [
         '313', '319', '320', '321', '322', '323', '324',
-        '325', '326', '327', '328', '329', '330', '331', '343' 
+        '325', '326', '327', '328', '329', '330', '331', '343'
     ]
 
     if 'codigos_adicionados' not in session:
         session['codigos_adicionados'] = []
 
     if request.method == 'POST':
-        if 'add_codigo' in request.form: # Mudança no nome do botão para 'add_codigo'
+        if 'add_codigo' in request.form:
             codigo = request.form.get('codigo')
             pavimento = request.form.get('pavimento')
             troca = request.form.get('troca')
             profundidade = request.form.get('profundidade')
-            # NOVO: Captura o campo mts_tubo_batido
-            mts_tubo_batido = request.form.get('mts_tubo_batido') 
+            mts_tubo_batido = request.form.get('mts_tubo_batido')
             diametro = request.form.get('diametro')
 
             item_codificado = {
@@ -315,7 +314,7 @@ def codificar():
                 'pavimento': pavimento,
                 'troca': troca,
                 'profundidade': profundidade,
-                'mts_tubo_batido': mts_tubo_batido, # NOVO: Adiciona ao dicionário
+                'mts_tubo_batido': mts_tubo_batido,
                 'diametro': diametro
             }
 
@@ -328,18 +327,22 @@ def codificar():
 
         elif 'finalizar' in request.form:
             itens_para_processar = session.get('codigos_adicionados', [])
-            
+            print(f"DEBUG app.py: Itens para processar (antes de processar_codigos): {itens_para_processar}")
+
             try:
+                # AQUI É A MUDANÇA PRINCIPAL: Chamar a função processar_codigos
                 codigos_finalizados_output = processar_codigos(itens_para_processar)
                 texto_codificado = '\n'.join(codigos_finalizados_output)
                 flash('Códigos finalizados! Abaixo o texto gerado.', 'sucesso')
             except Exception as e:
                 texto_codificado = f"Erro ao processar códigos: {e}"
                 flash(f'Ocorreu um erro ao finalizar a codificação: {e}', 'erro')
-            
-            session.pop('codigos_adicionados', None) 
-            return render_template('codificar.html', codigos=codigos_disponiveis, texto_codificado=texto_codificado)
 
+            session.pop('codigos_adicionados', None)
+            # Passar codigos_adicionados vazio para limpar a tabela após finalizar
+            return render_template('codificar.html', codigos=codigos_disponiveis, texto_codificado=texto_codificado, codigos_adicionados=[])
+
+    # Para requisições GET ou após um redirecionamento, garantir que a lista de adicionados seja passada
     return render_template('codificar.html', codigos=codigos_disponiveis, codigos_adicionados=session.get('codigos_adicionados', []), texto_codificado=None)
 
 if __name__ == '__main__':
