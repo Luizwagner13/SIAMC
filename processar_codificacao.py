@@ -4,318 +4,250 @@ def processar_codigos(lista_itens_adicionados):
     """
     Processa uma lista de dicionários contendo os dados dos códigos adicionados
     e retorna uma lista de strings formatadas para exibição.
-    Lida com valores None para os campos de entrada.
     """
     output_final = []
 
     # Tabela de mapeamento para os códigos 319 e seus excedentes
-    # Gerada a partir da entrada do usuário.
-    # A profundidade é mapeada como (min_val, max_val) ou (min_val, float('inf'))
     tabela_319 = {
         'PASSEIO': {
             'SEM TROCA': {
-                'ATE 2 MTS DE TUBO BATIDO': {
-                    (0.0, 1.25): 3177,
-                    (1.25, 2.00): 3443,
-                    (2.00, 3.00): 3445,
-                    (3.00, 5.00): 3816
+                'profundidades_base': {
+                    (0.0, 1.25): '3810',
+                    (1.25, 2.00): '3811', # Código base para esta faixa E código de excedente
+                    (2.00, 3.00): '3812',
+                    (3.00, 5.00): '3813'
                 },
-                'EXEDENTE': {
-                    (0.0, 1.25): 3178,
-                    (1.25, 2.00): 3444,
-                    (2.00, 3.00): 3446,
-                    (3.00, 5.00): 3817
-                }
+                'codigo_excedente_mts': '3811' # O código para o excedente de MTS (conforme discutido)
             },
             'TROCA PARCIAL': {
-                'ATE 2 MTS DE TUBO BATIDO': {
-                    (0.0, 1.25): 3159,
-                    (1.25, 2.00): 3431,
-                    (2.00, 3.00): 3433,
-                    (3.00, 5.00): 3810
+                'profundidades_base': {
+                    (0.0, 1.25): '3830',
+                    (1.25, 2.00): '3831',
+                    (2.00, 3.00): '3832',
+                    (3.00, 5.00): '3833'
                 },
-                'EXEDENTE': {
-                    (0.0, 1.25): 3160,
-                    (1.25, 2.00): 3432,
-                    (2.00, 3.00): 3434,
-                    (3.00, 5.00): 3811
-                }
+                'codigo_excedente_mts': '3831'
             },
             'TROCA TOTAL': {
-                'ATE 2 MTS DE TUBO BATIDO': {
-                    (0.0, 1.25): 3141,
-                    (1.25, 2.00): 3419,
-                    (2.00, 3.00): 3421,
-                    (3.00, 5.00): 3804
+                'profundidades_base': {
+                    (0.0, 1.25): '3840',
+                    (1.25, 2.00): '3841',
+                    (2.00, 3.00): '3842',
+                    (3.00, 5.00): '3843'
                 },
-                'EXEDENTE': {
-                    (0.0, 1.25): 3142,
-                    (1.25, 2.00): 3420,
-                    (2.00, 3.00): 3422,
-                    (3.00, 5.00): 3805
-                }
+                'codigo_excedente_mts': '3841'
             }
         },
         'RUA': {
             'SEM TROCA': {
-                'ATE 2 MTS DE TUBO BATIDO': {
-                    (0.0, 1.25): 3183,
-                    (1.25, 2.00): 3447,
-                    (2.00, 3.00): 3449,
-                    (3.00, 5.00): 3818
+                'profundidades_base': {
+                    (0.0, 1.25): '3446',
+                    (1.25, 2.00): '3447',
+                    (2.00, 3.00): '3448',
+                    (3.00, 5.00): '3449'
                 },
-                'EXEDENTE': {
-                    (0.0, 1.25): 3184,
-                    (1.25, 2.00): 3448,
-                    (2.00, 3.00): 3450,
-                    (3.00, 5.00): 3819
-                }
+                'codigo_excedente_mts': '3447'
             },
             'TROCA PARCIAL': {
-                'ATE 2 MTS DE TUBO BATIDO': {
-                    (0.0, 1.25): 3165,
-                    (1.25, 2.00): 3435,
-                    (2.00, 3.00): 3437,
-                    (3.00, 5.00): 3812
+                'profundidades_base': {
+                    (0.0, 1.25): '3860',
+                    (1.25, 2.00): '3861',
+                    (2.00, 3.00): '3862',
+                    (3.00, 5.00): '3863'
                 },
-                'EXEDENTE': {
-                    (0.0, 1.25): 3166,
-                    (1.25, 2.00): 3436,
-                    (2.00, 3.00): 3438,
-                    (3.00, 5.00): 3813
-                }
+                'codigo_excedente_mts': '3861'
             },
             'TROCA TOTAL': {
-                'ATE 2 MTS DE TUBO BATIDO': {
-                    (0.0, 1.25): 3147,
-                    (1.25, 2.00): 3423,
-                    (2.00, 3.00): 3425,
-                    (3.00, 5.00): 3806
+                'profundidades_base': {
+                    (0.0, 1.25): '3870',
+                    (1.25, 2.00): '3871',
+                    (2.00, 3.00): '3872',
+                    (3.00, 5.00): '3873'
                 },
-                'EXEDENTE': {
-                    (0.0, 1.25): 3148,
-                    (1.25, 2.00): 3424,
-                    (2.00, 3.00): 3426,
-                    (3.00, 5.00): 3807
-                }
+                'codigo_excedente_mts': '3871'
             }
         },
         'TERRA': {
             'SEM TROCA': {
-                'ATE 2 MTS DE TUBO BATIDO': {
-                    (0.0, 1.25): 3171,
-                    (1.25, 2.00): 3439,
-                    (2.00, 3.00): 3441,
-                    (3.00, 5.00): 3814
+                'profundidades_base': {
+                    (0.0, 1.25): '3075',
+                    (1.25, 2.00): '3409',
+                    (2.00, 3.00): '3410',
+                    (3.00, 5.00): '3411'
                 },
-                'EXEDENTE': {
-                    (0.0, 1.25): 3172,
-                    (1.25, 2.00): 3440,
-                    (2.00, 3.00): 3442,
-                    (3.00, 5.00): 3815
-                }
+                'codigo_excedente_mts': '3409'
             },
             'TROCA PARCIAL': {
-                'ATE 2 MTS DE TUBO BATIDO': {
-                    (0.0, 1.25): 3153,
-                    (1.25, 2.00): 3427,
-                    (2.00, 3.00): 3429,
-                    (3.00, 5.00): 3808
+                'profundidades_base': {
+                    (0.0, 1.25): '3780',
+                    (1.25, 2.00): '3781',
+                    (2.00, 3.00): '3782',
+                    (3.00, 5.00): '3783'
                 },
-                'EXEDENTE': {
-                    (0.0, 1.25): 3154,
-                    (1.25, 2.00): 3428,
-                    (2.00, 3.00): 3430,
-                    (3.00, 5.00): 3809
-                }
+                'codigo_excedente_mts': '3781'
             },
             'TROCA TOTAL': {
-                'ATE 2 MTS DE TUBO BATIDO': {
-                    (0.0, 1.25): 3135,
-                    (1.25, 2.00): 3415,
-                    (2.00, 3.00): 3417,
-                    (3.00, 5.00): 3802
+                'profundidades_base': {
+                    (0.0, 1.25): '3790',
+                    (1.25, 2.00): '3791',
+                    (2.00, 3.00): '3792',
+                    (3.00, 5.00): '3793'
                 },
-                'EXEDENTE': {
-                    (0.0, 1.25): 3136,
-                    (1.25, 2.00): 3416,
-                    (2.00, 3.00): 3418,
-                    (3.00, 5.00): 3803
-                }
+                'codigo_excedente_mts': '3791'
             }
         }
     }
 
 
-    # Helper function to find the correct depth range
-    def find_depth_code(profundidade, depth_map):
-        for (min_val, max_val), code in depth_map.items():
-            if min_val <= profundidade <= max_val:
-                return code
-        return None
-
+    print(f"DEBUG: Processando {len(lista_itens_adicionados)} itens.")
     for item in lista_itens_adicionados:
-        codigo_selecionado = item.get('codigo')
-
-        if codigo_selecionado == '319 codigos':
-            pavimento = item.get('pavimento')
-            troca = item.get('troca')
-            profundidade_str = item.get('profundidade')
-            mts_tubo_batido_str = item.get('mts_tubo_batido')
-
-            # Validação e limpeza dos dados
-            if not all([pavimento, troca, profundidade_str, mts_tubo_batido_str]):
-                output_final.append(f"ERRO: Dados incompletos para o código {codigo_selecionado}. Verifique Pavimento, Troca, Profundidade e Metros de Tubo Batido.")
-                continue
-
-            # Converte vírgula para ponto e tenta converter para float
+        print(f"DEBUG: Processando item: {item}")
+        codigo_input = item.get('codigo')
+        
+        # --- Lógica para o código 313 ---
+        if codigo_input == '313':
+            pavimento_input = item.get('pavimento', '').strip().upper()
             try:
-                profundidade = float(profundidade_str.replace(',', '.'))
-                mts_tubo_batido = float(mts_tubo_batido_str.replace(',', '.'))
+                profundidade_input = float(item.get('profundidade', '').replace(',', '.') or 0.0)
             except ValueError:
-                output_final.append(f"ERRO: Valores de profundidade ou Metros de Tubo Batido inválidos para o código {codigo_selecionado}.")
-                continue
+                profundidade_input = 0.0 
 
-            # Normaliza para maiúsculas para corresponder às chaves da tabela
-            pavimento_upper = pavimento.upper().strip()
-            troca_upper = troca.upper().strip()
+            codigo_gerado = None
+            mapa_313 = {
+                'CIMENTO': {
+                    (0.0, 1.25): '3078',
+                    (1.25, 2.00): '3412',
+                    (2.00, 3.00): '3413'
+                },
+                'TERRA': {
+                    (0.0, 1.25): '3075',
+                    (1.25, 2.00): '3409',
+                    (2.00, 3.00): '3410'
+                }
+            }
 
-            if pavimento_upper not in tabela_319:
-                output_final.append(f"ERRO: Pavimento inválido '{pavimento}' para o código {codigo_selecionado}.")
-                continue
-            if troca_upper not in tabela_319[pavimento_upper]:
-                output_final.append(f"ERRO: Tipo de troca inválido '{troca}' para o pavimento '{pavimento}' no código {codigo_selecionado}.")
-                continue
-
-            # Lógica para "ATE 2 MTS DE TUBO BATIDO" (Unidade Base)
-            base_codes_map = tabela_319[pavimento_upper][troca_upper].get('ATE 2 MTS DE TUBO BATIDO', {})
-            base_code = find_depth_code(profundidade, base_codes_map)
-
-            if base_code:
-                output_final.append(f"{base_code} - 1 UNIDADE")
+            if pavimento_input in mapa_313:
+                for (min_prof, max_prof), cod in mapa_313[pavimento_input].items():
+                    if min_prof <= profundidade_input <= max_prof:
+                        codigo_gerado = cod
+                        break
+            
+            if codigo_gerado:
+                output_final.append(f'{codigo_gerado} - 1 unidade')
+                print(f"DEBUG: 313 - Código gerado: {codigo_gerado}")
             else:
-                output_final.append(f"ERRO: Código base não encontrado para Pavimento: {pavimento}, Troca: {troca}, Profundidade: {profundidade}.")
+                # LINHA CORRIGIDA AQUI: Removido o ')' extra no final
+                error_msg = f'313 - Erro: Não foi possível determinar o código para Pavimento: {item.get("pavimento")}, Profundidade: {item.get("profundidade")}. Verifique os valores.'
+                output_final.append(error_msg)
+                print(f"DEBUG: 313 - ERRO: {error_msg}")
+        
+        # --- Lógica para o código 319 ---
+        elif codigo_input == '319':
+            pavimento_input = item.get('pavimento', '').strip().upper()
+            troca_input = item.get('troca', '').strip().upper()
+            
+            try:
+                profundidade_input = float(item.get('profundidade', '').replace(',', '.') or 0.0)
+            except ValueError:
+                profundidade_input = 0.0 
+                print(f"DEBUG: 319 - Profundidade inválida: {item.get('profundidade')}, usando 0.0")
 
-            # Lógica para "EXEDENTE" de MTS de Tubo Batido
-            excedente_mts_calc = mts_tubo_batido - 2.0 # Assume 2.0 é a base de MTS de Tubo Batido
+            try:
+                mts_tubo_batido_input = float(item.get('mts_tubo_batido', '').replace(',', '.') or 0.0)
+            except ValueError:
+                mts_tubo_batido_input = 0.0 
+                print(f"DEBUG: 319 - MTS Tubo Batido inválido: {item.get('mts_tubo_batido')}, usando 0.0")
 
-            if excedente_mts_calc > 0:
-                # O código do excedente está na seção 'EXEDENTE' para a mesma profundidade/pavimento/troca
-                excedente_codes_map = tabela_319[pavimento_upper][troca_upper].get('EXEDENTE', {})
-                excedente_code = find_depth_code(profundidade, excedente_codes_map)
-
-                if excedente_code:
-                    output_final.append(f"{excedente_code} - {int(excedente_mts_calc)} METROS") # Formatado como inteiro
+            if pavimento_input in tabela_319 and troca_input in tabela_319[pavimento_input]:
+                regras = tabela_319[pavimento_input][troca_input]
+                
+                codigo_base = None
+                for (min_prof, max_prof), cod in regras['profundidades_base'].items():
+                    if min_prof <= profundidade_input <= max_prof:
+                        codigo_base = cod
+                        break
+                
+                if not codigo_base:
+                    if profundidade_input > 5.00:
+                        codigo_base = list(regras['profundidades_base'].values())[-1] 
+                        output_final.append(f'{codigo_base} - 1 UNIDADE (Profundidade > 5.00m)')
+                        print(f"DEBUG: 319 - Profundidade > 5.00m, usando código base: {codigo_base}")
+                    else:
+                        error_msg = f'319 - Erro: Profundidade "{item.get("profundidade")}" fora das faixas para Pavimento: {item.get("pavimento")}, Troca: {item.get("troca")}'
+                        output_final.append(error_msg)
+                        print(f"DEBUG: 319 - ERRO: {error_msg}")
                 else:
-                    output_final.append(f"ERRO: Código de excedente de MTS não encontrado para Pavimento: {pavimento}, Troca: {troca}, Profundidade: {profundidade}.")
+                    output_final.append(f'{codigo_base} - 1 UNIDADE')
+                    print(f"DEBUG: 319 - Código base determinado: {codigo_base}")
 
-        elif codigo_selecionado == '321 codigos':
-            pavimento = item.get('pavimento')
-            troca = item.get('troca')
-            diametro = item.get('diametro')
-            
-            if not all([pavimento, troca, diametro]):
-                output_final.append(f"ERRO: Dados incompletos para o código {codigo_selecionado}. Verifique Pavimento, Tipo de Troca e Diâmetro.")
-                continue
-            
-            output_final.append(f"{codigo_selecionado} - {pavimento} {troca} {diametro}")
+                if mts_tubo_batido_input > 2.00:
+                    codigo_excedente = regras['codigo_excedente_mts']
+                    quantidade_excedente = mts_tubo_batido_input - 2.00
+                    output_final.append(f'{codigo_excedente} - {quantidade_excedente:.2f} MTS')
+                    print(f"DEBUG: 319 - Excedente gerado: {codigo_excedente} - {quantidade_excedente:.2f} MTS")
 
-        elif codigo_selecionado == '313 codigos':
-            diametro = item.get('diametro')
-            if not diametro:
-                output_final.append(f"ERRO: Diâmetro não fornecido para o código {codigo_selecionado}.")
-                continue
-            output_final.append(f"{codigo_selecionado} - {diametro}")
-
-        elif codigo_selecionado == '320 (rec) codigos':
-            diametro = item.get('diametro')
-            pavimento = item.get('pavimento')
-            if not all([diametro, pavimento]):
-                output_final.append(f"ERRO: Dados incompletos para o código {codigo_selecionado}. Verifique Diâmetro e Pavimento.")
-                continue
-            output_final.append(f"{codigo_selecionado} - {diametro} {pavimento}")
-
-        elif codigo_selecionado == '300 codigos':
-            diametro = item.get('diametro')
-            pavimento = item.get('pavimento')
-            if not all([diametro, pavimento]):
-                output_final.append(f"ERRO: Dados incompletos para o código {codigo_selecionado}. Verifique Diâmetro e Pavimento.")
-                continue
-            output_final.append(f"{codigo_selecionado} - {diametro} {pavimento}")
-
-        elif codigo_selecionado == '343 codigos':
-            diametro = item.get('diametro')
-            pavimento = item.get('pavimento')
-            troca = item.get('troca')
-            if not all([diametro, pavimento, troca]):
-                output_final.append(f"ERRO: Dados incompletos para o código {codigo_selecionado}. Verifique Diâmetro, Pavimento e Tipo de Troca.")
-                continue
-            output_final.append(f"{codigo_selecionado} - {diametro} {pavimento} {troca}")
-
-        elif codigo_selecionado == '329 codigos':
-            diametro = item.get('diametro')
-            pavimento = item.get('pavimento')
-            troca = item.get('troca')
-            if not all([diametro, pavimento, troca]):
-                output_final.append(f"ERRO: Dados incompletos para o código {codigo_selecionado}. Verifique Diâmetro, Pavimento e Tipo de Troca.")
-                continue
-            output_final.append(f"{codigo_selecionado} - {diametro} {pavimento} {troca}")
-
-        else:
-            # Lógica para outros códigos genéricos ou não mapeados especificamente
-            detalhes = []
-            if item.get('pavimento'): detalhes.append(item['pavimento'])
-            if item.get('troca'): detalhes.append(item['troca'])
-            if item.get('profundidade'): detalhes.append(item['profundidade'])
-            if item.get('mts_tubo_batido'): detalhes.append(item['mts_tubo_batido'])
-            if item.get('diametro'): detalhes.append(item['diametro'])
-
-            if detalhes:
-                output_final.append(f"{codigo_selecionado} - {' '.join(filter(None, detalhes))}") # filter(None, ...) remove vazios
             else:
-                output_final.append(str(codigo_selecionado))
+                error_msg = f'319 - Erro: Combinação Pavimento "{item.get("pavimento")}" / Troca "{item.get("troca")}" não encontrada na tabela.'
+                output_final.append(error_msg)
+                print(f"DEBUG: 319 - ERRO: {error_msg}")
 
-    return "\n".join(output_final)
+        # --- Lógica para outros códigos (ainda não implementada) ---
+        else:
+            output_final.append(f'{codigo_input} - Lógica de codificação pendente.')
+            print(f"DEBUG: Código {codigo_input} - Lógica pendente.")
+            
+    if not output_final:
+        output_final.append("Nenhum código válido foi gerado. Verifique os inputs.")
+        print("DEBUG: Nenhum código válido foi gerado.")
+            
+    print(f"DEBUG: Final output_final antes do retorno: {output_final}")
+    return output_final
 
-# --- Exemplo de uso (para testes internos) ---
 if __name__ == '__main__':
-    print("--- Testes de processamento de códigos ---")
+    # --- Testes manuais para processar_codificacao.py ---
+    print("\n--- Testes para processar_codificacao.py ---")
 
-    # Seu exemplo: 3443 - 1 UNIDADE, 3444 - 7 METROS
-    # (3443 é para DE 1,25 A 2,00 MTS DE PROFUNDIDADE. 1.55 está dentro)
-    # (9 MTS de Tubo Batido - 2 MTS base = 7 MTS excedente)
-    itens_para_testar = [
-        {'codigo': '319 codigos', 'pavimento': 'Passeio', 'troca': 'Sem Troca', 'profundidade': '1.55', 'mts_tubo_batido': '9', 'diametro': ''},
-        
-        # Teste 1: Passeio, Sem Troca, Profundidade 1.0 (ATE 1,25), MTS Tubo Batido 1.0 (ATE 2) -> Esperado: 3177 - 1 UNIDADE
-        {'codigo': '319 codigos', 'pavimento': 'Passeio', 'troca': 'Sem Troca', 'profundidade': '1.0', 'mts_tubo_batido': '1.0', 'diametro': ''},
-        
-        # Teste 2: Passeio, Sem Troca, Profundidade 1.0 (ATE 1,25), MTS Tubo Batido 5.0 (ATE 2 + EXCEDENTE) -> Esperado: 3177 - 1 UNIDADE, 3178 - 3 METROS
-        {'codigo': '319 codigos', 'pavimento': 'Passeio', 'troca': 'Sem Troca', 'profundidade': '1.0', 'mts_tubo_batido': '5.0', 'diametro': ''},
-        
-        # Teste 3: Passeio, Troca Parcial, Profundidade 1.0 (ATE 1,25), MTS Tubo Batido 1.0 (ATE 2) -> Esperado: 3159 - 1 UNIDADE
-        {'codigo': '319 codigos', 'pavimento': 'Passeio', 'troca': 'Troca Parcial', 'profundidade': '1.0', 'mts_tubo_batido': '1.0', 'diametro': ''},
-        
-        # Teste 4: Passeio, Troca Parcial, Profundidade 4.0 (DE 3,00 A 5,00), MTS Tubo Batido 1.0 (ATE 2) -> Esperado: 3810 - 1 UNIDADE
-        {'codigo': '319 codigos', 'pavimento': 'Passeio', 'troca': 'Troca Parcial', 'profundidade': '4.0', 'mts_tubo_batido': '1.0', 'diametro': ''},
-        
-        # Teste 5: Passeio, Troca Parcial, Profundidade 4.0 (DE 3,00 A 5,00), MTS Tubo Batido 5.0 (ATE 2 + EXCEDENTE) -> Esperado: 3810 - 1 UNIDADE, 3811 - 3 METROS
-        {'codigo': '319 codigos', 'pavimento': 'Passeio', 'troca': 'Troca Parcial', 'profundidade': '4.0', 'mts_tubo_batido': '5.0', 'diametro': ''},
-
-        # Testes com valores inválidos/fora do esperado (para verificar as mensagens de erro)
-        {'codigo': '319 codigos', 'pavimento': None, 'troca': 'Sem Troca', 'profundidade': '1.0', 'mts_tubo_batido': '1.5', 'diametro': ''}, # ERRO: Dados incompletos
-        {'codigo': '319 codigos', 'pavimento': 'Passeio', 'troca': None, 'profundidade': '1.0', 'mts_tubo_batido': '1.5', 'diametro': ''}, # ERRO: Dados incompletos
-        {'codigo': '319 codigos', 'pavimento': 'Passeio', 'troca': 'Invalida', 'profundidade': '1.0', 'mts_tubo_batido': '1.5', 'diametro': ''}, # ERRO: Tipo de troca inválido
-        {'codigo': '319 codigos', 'pavimento': 'Rua', 'troca': 'Sem Troca', 'profundidade': 'abc', 'mts_tubo_batido': '1.5', 'diametro': ''}, # ERRO: Valores inválidos
-
-        # Testes para outros códigos (que não precisam de lógica específica complexa)
-        {'codigo': '300 codigos', 'diametro': '150', 'pavimento': 'Rua', 'troca': None, 'profundidade': None, 'mts_tubo_batido': None},
-        {'codigo': '313 codigos', 'diametro': '200', 'pavimento': None, 'troca': None, 'profundidade': None, 'mts_tubo_batido': None},
-        {'codigo': '500 OUTROS', 'diametro': '50', 'pavimento': 'Passeio', 'troca': 'Completa', 'profundidade': '2.5', 'mts_tubo_batido': '10'}
+    # Testes para o código 313
+    print("\n--- Testes para 313 ---")
+    test_data_313 = [
+        {'codigo': '313', 'pavimento': 'Cimento', 'profundidade': '1.0', 'troca': '', 'diametro': '', 'mts_tubo_batido': ''},
+        {'codigo': '313', 'pavimento': 'Terra', 'profundidade': '2.5', 'troca': '', 'diametro': '', 'mts_tubo_batido': ''},
+        {'codigo': '313', 'pavimento': 'Cimento', 'profundidade': '1.25', 'troca': '', 'diametro': '', 'mts_tubo_batido': ''},
+        {'codigo': '313', 'pavimento': 'Cimento', 'profundidade': '1.26', 'troca': '', 'diametro': '', 'mts_tubo_batido': ''},
+        {'codigo': '313', 'pavimento': 'Cimento', 'profundidade': '4.0', 'troca': '', 'diametro': '', 'mts_tubo_batido': ''}, # Fora do range (erro esperado)
     ]
+    resultados_313 = processar_codigos(test_data_313)
+    for res in resultados_313:
+        print(res)
 
-    for i, item in enumerate(itens_para_testar):
-        print(f"\n--- Teste {i+1} ---")
-        print(f"Entrada: {item}")
-        resultado = processar_codigos([item])
-        print(f"Saída:\n{resultado}")
+    # Testes para o código 319
+    print("\n--- Testes para 319 ---")
+    test_data_319 = [
+        # Exemplo 1: Sem excedente de MTS (MTS_TUBO_BATIDO <= 2.00)
+        {'codigo': '319', 'pavimento': 'Passeio', 'troca': 'Sem Troca', 'profundidade': '1.0', 'mts_tubo_batido': '1.5', 'diametro': ''},
+        {'codigo': '319', 'pavimento': 'Rua', 'troca': 'Troca Parcial', 'profundidade': '2.0', 'mts_tubo_batido': '2.0', 'diametro': ''},
+        {'codigo': '319', 'pavimento': 'Terra', 'troca': 'Troca Total', 'profundidade': '0.5', 'mts_tubo_batido': '0.8', 'diametro': ''},
+
+        # Exemplo 2: Com excedente de MTS (MTS_TUBO_BATIDO > 2.00)
+        {'codigo': '319', 'pavimento': 'Passeio', 'troca': 'Sem Troca', 'profundidade': '3.5', 'mts_tubo_batido': '3.5', 'diametro': ''}, # Excedente de 1.5 MTS
+        {'codigo': '319', 'pavimento': 'Rua', 'troca': 'Sem Troca', 'profundidade': '4.8', 'mts_tubo_batido': '5.25', 'diametro': ''}, # Excedente de 3.25 MTS
+        {'codigo': '319', 'pavimento': 'Passeio', 'troca': 'Troca Parcial', 'profundidade': '2.8', 'mts_tubo_batido': '2.1', 'diametro': ''}, # Excedente de 0.1 MTS
+
+        # Testes com valores inválidos/fora do esperado
+        {'codigo': '319', 'pavimento': 'Asfaltico', 'troca': 'Sem Troca', 'profundidade': '1.0', 'mts_tubo_batido': '1.5', 'diametro': ''}, # Pavimento inválido
+        {'codigo': '319', 'pavimento': 'Passeio', 'troca': 'Invalida', 'profundidade': '1.0', 'mts_tubo_batido': '1.5', 'diametro': ''}, # Troca inválida
+        {'codigo': '319', 'pavimento': 'Passeio', 'troca': 'Sem Troca', 'profundidade': '6.0', 'mts_tubo_batido': '1.5', 'diametro': ''}, # Profundidade > 5.00m (deve pegar o último código base)
+        {'codigo': '319', 'pavimento': 'Passeio', 'troca': 'Sem Troca', 'profundidade': 'A', 'mts_tubo_batido': 'B', 'diametro': ''}, # Valores não numéricos
+    ]
+    resultados_319 = processar_codigos(test_data_319)
+    for res in resultados_319:
+        print(res)
+
+    # Teste de código pendente
+    print("\n--- Teste de código pendente ---")
+    test_data_pendente = [
+        {'codigo': '320', 'pavimento': '', 'profundidade': '', 'troca': '', 'diametro': '', 'mts_tubo_batido': ''}
+    ]
+    resultados_pendente = processar_codigos(test_data_pendente)
+    for res in resultados_pendente:
+        print(res)
