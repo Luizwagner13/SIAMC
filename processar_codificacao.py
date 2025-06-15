@@ -1,352 +1,71 @@
-# app.py (Somente a parte da rota /codificar foi alterada)
-
-from flask import Flask, render_template, request, redirect, url_for, session, flash, send_file
-from werkzeug.security import generate_password_hash, check_password_hash
-import os
-import subprocess
-import json
-from datetime import datetime
-
-from dividir_pdf import dividir_pdf_bp  
-
-# Importar o novo módulo de processamento
-from processar_codificacao import processar_codigos # AQUI: Importa a função
-
-app = Flask(__name__)
-app.secret_key = 'segredo123'
-app.register_blueprint(dividir_pdf_bp)
-
-USERS_FILE = 'users.json'
-
-if os.path.exists(USERS_FILE):
-    with open(USERS_FILE, 'r') as f:
-        users = json.load(f)
-else:
-    users = {}
-
-@app.route('/')
-def home():
-    return redirect(url_for('login'))
-
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
-        user_data = users.get(username)
-
-        if user_data:
-            valid_until_str = user_data.get('valid_until')
-            if valid_until_str:
-                valid_until = datetime.strptime(valid_until_str, '%Y-%m-%d').date()
-                today = datetime.today().date()
-                if today > valid_until:
-                    return render_template('expirado.html', username=username, validade=valid_until)
-
-            if check_password_hash(user_data['password'], password):
-                session['user'] = username
-                user_folder = os.path.join('user_data', username)
-                os.makedirs(user_folder, exist_ok=True)
-                flash('Login realizado com sucesso!', 'sucesso')
-
-                if user_data.get('is_admin'):
-                    return redirect(url_for('admin'))
-                else:
-                    return redirect(url_for('dashboard'))
-
-        flash('Usuário ou senha incorretos', 'erro')
-        return redirect(url_for('login'))
-
-    return render_template('login.html')
-
-@app.route('/register', methods=['GET', 'POST'])
-def register():
-    flash('O cadastro de novos usuários está desativado. Entre em contato com o administrador.', 'erro')
-    return redirect(url_for('login'))
-
-@app.route('/dashboard')
-def dashboard():
-    if 'user' in session:
-        username = session['user']
-        user_data = users.get(username, {})
-        validade = user_data.get('valid_until', 'Indefinido')
-        return render_template('dashboard.html', user=username, validade=validade)
-    flash('Faça login para acessar sua área.', 'erro')
-    return redirect(url_for('login'))
-
-@app.route('/logout')
-def logout():
-    session.pop('user', None)
-    flash('Logout realizado com sucesso.', 'sucesso')
-    return redirect(url_for('login'))
-
-@app.route('/upload_pdf', methods=['POST'])
-def upload_pdf():
-    if 'user' not in session:
-        return redirect(url_for('login'))
-
-    username = session['user']
-    user_folder = os.path.join('user_data', username)
-    os.makedirs(user_folder, exist_ok=True)
-
-    files = request.files.getlist('pdfs')
-    for file in files:
-        if file and file.filename.endswith('.pdf'):
-            filename = os.path.basename(file.filename)
-            filepath = os.path.join(user_folder, filename)
-            file.save(filepath)
-
-    flash('PDF(s) enviados com sucesso.', 'sucesso')
-    return redirect(url_for('dashboard'))
-
-@app.route('/upload_medicao', methods=['POST'])
-def upload_medicao():
-    if 'user' not in session:
-        flash('Faça login para enviar a medição.', 'erro')
-        return redirect(url_for('login'))
-
-    file = request.files.get('medicao')
-    if not file or not file.filename.endswith('.xlsx'):
-        flash('Envie um arquivo .xlsx válido.', 'erro')
-        return redirect(url_for('dashboard'))
-
-    username = session['user']
-    user_folder = os.path.join('user_data', username)
-    os.makedirs(user_folder, exist_ok=True)
-
-    caminho_medicao = os.path.join(user_folder, 'medicao_atualizada.xlsx')
-    file.save(caminho_medicao)
-
-    flash('Planilha de medição enviada e substituída com sucesso!', 'sucesso')
-    return redirect(url_for('dashboard'))
-
-@app.route('/criar_planilha', methods=['POST'])
-def criar_planilha():
-    if 'user' not in session:
-        return redirect(url_for('login'))
-
-    username = session['user']
-    user_folder = os.path.join('user_data', username)
-
-    try:
-        resultado = subprocess.run(
-            ['python', 'extrair_informacoes.py', user_folder],
-            capture_output=True,
-            text=True,
-            timeout=300
-        )
-        print("📤 STDOUT:", resultado.stdout)
-        print("⚠️ STDERR:", resultado.stderr)
-
-        if resultado.returncode != 0:
-            flash('Erro ao gerar a planilha. Verifique os dados enviados.', 'erro')
-            return redirect(url_for('dashboard'))
-
-    except subprocess.TimeoutExpired:
-        flash('A criação da planilha excedeu o tempo limite (5 minutos).', 'erro')
-        return redirect(url_for('dashboard'))
-    except subprocess.CalledProcessError:
-        flash('Erro ao executar o script de criação da planilha.', 'erro')
-        return redirect(url_for('dashboard'))
-
-    for filename in os.listdir(user_folder):
-        if filename.endswith('.pdf'):
-            os.remove(os.path.join(user_folder, filename))
-
-    flash('Planilha criada com sucesso!', 'sucesso')
-    return redirect(url_for('dashboard'))
-
-@app.route('/baixar_planilha')
-def baixar_planilha():
-    if 'user' not in session:
-        flash('Faça login para baixar a planilha.', 'erro')
-        return redirect(url_for('login'))
-
-    username = session['user']
-    user_folder = os.path.join('user_data', username)
-    filepath = os.path.join(user_folder, 'informacoes_extraidas.xlsx')
-
-    if not os.path.exists(filepath):
-        flash('Nenhuma planilha encontrada para download.', 'erro')
-        return redirect(url_for('dashboard'))
-
-    return send_file(filepath, as_attachment=True)
-
-@app.route('/baixar_medicao')
-def baixar_medicao():
-    if 'user' not in session:
-        flash('Faça login para baixar a medição.', 'erro')
-        return redirect(url_for('login'))
-
-    username = session['user']
-    user_folder = os.path.join('user_data', username)
-    filepath = os.path.join(user_folder, 'medicao_atualizada.xlsx')
-
-    if not os.path.exists(filepath) or os.path.getsize(filepath) == 0:
-        flash('Nenhuma planilha de medição encontrada para download.', 'erro')
-        return redirect(url_for('dashboard'))
-
-    return send_file(filepath, as_attachment=True)
-
-@app.route('/atualizar_medicao', methods=['POST'])
-def atualizar_medicao():
-    if 'user' not in session:
-        flash('Faça login para atualizar a medição.', 'erro')
-        return redirect(url_for('login'))
-
-    username = session['user']
-    user_folder = os.path.join('user_data', username)
-
-    caminho_pdf = os.path.join(user_folder, 'informacoes_extraidas.xlsx')
-    caminho_medicao = os.path.join(user_folder, 'medicao_atualizada.xlsx')
-
-    if not os.path.exists(caminho_pdf):
-        flash('Arquivo de informações extraídas não encontrado. Gere a planilha antes de atualizar.', 'erro')
-        return redirect(url_for('dashboard'))
-
-    try:
-        subprocess.run(
-            ['python', 'atualizar_medicao.py', caminho_pdf, caminho_medicao],
-            check=True,
-            timeout=300
-        )
-
-        if not os.path.exists(caminho_medicao) or os.path.getsize(caminho_medicao) == 0:
-            flash('Erro: a planilha de medição não foi gerada corretamente.', 'erro')
-            return redirect(url_for('dashboard'))
-
-        flash('Medição atualizada com sucesso!', 'sucesso')
-
-    except subprocess.TimeoutExpired:
-        flash('A atualização da medição excedeu o tempo limite (5 minutos).', 'erro')
-    except subprocess.CalledProcessError:
-        flash('Erro ao atualizar a medição.', 'erro')
-
-    return redirect(url_for('dashboard'))
-
-@app.route('/admin', methods=['GET', 'POST'])
-def admin():
-    if 'user' not in session:
-        flash('Faça login para acessar esta área.', 'erro')
-        return redirect(url_for('login'))
-
-    current_user = session['user']
-    user_data = users.get(current_user)
-
-    if not user_data or not user_data.get('is_admin'):
-        flash('Acesso negado.', 'erro')
-        return redirect(url_for('dashboard'))
-
-    if request.method == 'POST':
-        acao = request.form.get('acao')
-        username = request.form.get('username')
-
-        if acao == 'criar':
-            nova_senha = request.form.get('new_password')
-            validade = request.form.get('valid_until')
-            is_admin = True if request.form.get('is_admin') == 'on' else False
-
-            if username in users:
-                flash('Usuário já existe.', 'erro')
-            else:
-                users[username] = {
-                    'password': generate_password_hash(nova_senha),
-                    'valid_until': validade,
-                    'is_admin': is_admin
-                }
-                with open(USERS_FILE, 'w') as f:
-                    json.dump(users, f, indent=2)
-                flash(f'Usuário {username} criado com sucesso.', 'sucesso')
-
-        elif acao == 'editar':
-            validade = request.form.get('valid_until')
-            nova_senha = request.form.get('new_password')
-            is_admin = True if request.form.get('is_admin') == 'on' else False
-
-            if username in users:
-                users[username]['valid_until'] = validade
-                users[username]['is_admin'] = is_admin
-                if nova_senha:
-                    users[username]['password'] = generate_password_hash(nova_senha)
-                with open(USERS_FILE, 'w') as f:
-                    json.dump(users, f, indent=2)
-                flash(f'Usuário {username} atualizado.', 'sucesso')
-            else:
-                flash('Usuário não encontrado.', 'erro')
-
-        elif acao == 'excluir':
-            if username in users:
-                users.pop(username)
-                with open(USERS_FILE, 'w') as f:
-                    json.dump(users, f, indent=2)
-                flash(f'Usuário {username} excluído.', 'sucesso')
-            else:
-                flash('Usuário não encontrado.', 'erro')
-
-    return render_template('admin.html', users=users)
-
-@app.route('/dividir_pdf_link')
-def dividir_pdf_link():
-    return redirect(url_for('dividir_pdf_bp.dividir_pdf_route'))
-
-# Rota codificar atualizada
-@app.route('/codificar', methods=['GET', 'POST'])
-def codificar():
-    if 'user' not in session:
-        flash('Faça login para acessar a codificação.', 'erro')
-        return redirect(url_for('login'))
-
-    codigos_disponiveis = [
-        '313', '319', '320 (rec)', '321', '322', '323', '324',
-        '325', '326', '327', '328', '329', '330', '331', '343'
-    ]
-
-    if 'codigos_adicionados' not in session:
-        session['codigos_adicionados'] = []
-
-    if request.method == 'POST':
-        if 'adicionar_codigo' in request.form:
-            codigo = request.form.get('codigo')
-            pavimento = request.form.get('pavimento')
-            troca = request.form.get('troca')
-            profundidade = request.form.get('profundidade')
-            diametro = request.form.get('diametro')
-
-            item_codificado = {
-                'codigo': codigo,
-                'pavimento': pavimento,
-                'troca': troca,
-                'profundidade': profundidade,
-                'diametro': diametro
-            }
-
-            codigos_atualizados = session.get('codigos_adicionados', [])
-            codigos_atualizados.append(item_codificado)
-            session['codigos_adicionados'] = codigos_atualizados
-
-            flash('Código adicionado!', 'sucesso')
-            return redirect(url_for('codificar'))
-
-        elif 'finalizar' in request.form:
-            # Chama a função do script externo para processar os códigos
-            # passando a lista de dicionários armazenada na sessão
-            itens_para_processar = session.get('codigos_adicionados', [])
-            
-            # Aqui vamos chamar a função 'processar_codigos' do módulo 'processar_codificacao'
-            # Isso é melhor do que usar subprocess.run para uma simples função Python
-            # se ambos os arquivos estiverem no mesmo diretório do Render.
+# processar_codificacao.py
+
+def processar_codigos(lista_itens_adicionados):
+    """
+    Processa uma lista de dicionários contendo os dados dos códigos adicionados
+    e retorna uma lista de strings formatadas para exibição.
+    """
+    output_final = []
+
+    for item in lista_itens_adicionados:
+        codigo_input = item.get('codigo')
+        
+        # --- Lógica para o código 313 ---
+        if codigo_input == '313':
+            pavimento_input = item.get('pavimento', '').strip().upper()
             try:
-                codigos_finalizados_output = processar_codigos(itens_para_processar)
-                texto_codificado = '\n'.join(codigos_finalizados_output)
-                flash('Códigos finalizados! Abaixo o texto gerado.', 'sucesso')
-            except Exception as e:
-                texto_codificado = f"Erro ao processar códigos: {e}"
-                flash(f'Ocorreu um erro ao finalizar a codificação: {e}', 'erro')
-            
-            session.pop('codigos_adicionados', None) # Limpa a sessão após finalizar
-            return render_template('codificar.html', codigos=codigos_disponiveis, texto_codificado=texto_codificado)
+                # Substitui vírgula por ponto para garantir conversão correta para float
+                profundidade_input = float(item.get('profundidade', '').replace(',', '.') or 0.0)
+            except ValueError:
+                # Em caso de erro na conversão (ex: texto inválido), usa 0.0
+                profundidade_input = 0.0 
 
-    return render_template('codificar.html', codigos=codigos_disponiveis, codigos_adicionados=session.get('codigos_adicionados', []), texto_codificado=None)
+            codigo_gerado = None
+            if pavimento_input == 'CIMENTO':
+                if 0.0 <= profundidade_input <= 1.25:
+                    codigo_gerado = '3078'
+                elif 1.25 < profundidade_input <= 2.00:
+                    codigo_gerado = '3412'
+                elif 2.00 < profundidade_input <= 3.00:
+                    codigo_gerado = '3413'
+            elif pavimento_input == 'TERRA':
+                if 0.0 <= profundidade_input <= 1.25:
+                    codigo_gerado = '3075'
+                elif 1.25 < profundidade_input <= 2.00:
+                    codigo_gerado = '3409'
+                elif 2.00 < profundidade_input <= 3.00:
+                    codigo_gerado = '3410'
+            
+            if codigo_gerado:
+                output_final.append(f'{codigo_gerado} - 1 unidade')
+            else:
+                # Mensagem de erro mais descritiva
+                output_final.append(f'313 - Erro: Não foi possível determinar o código para Pavimento: {item.get("pavimento")}, Profundidade: {item.get("profundidade")}. Verifique os valores.')
+        
+        # --- Lógica para outros códigos (ainda não implementada) ---
+        # Exemplo:
+        # elif codigo_input == '319':
+        #     # Implemente a lógica para o 319 aqui, usando item.get('pavimento'), item.get('troca'), etc.
+        #     output_final.append(f'319 - Lógica a ser implementada com: Pavimento: {item.get("pavimento")}, Troca: {item.get("troca")}, Profundidade: {item.get("profundidade")}')
+        
+        # Para códigos ainda não processados com lógica específica
+        else:
+            output_final.append(f'{codigo_input} - Lógica de codificação pendente ou não encontrada.')
+            
+    return output_final
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    # Bloco para testes manuais do script
+    print("--- Testes para processar_codificacao.py ---")
+    test_data = [
+        {'codigo': '313', 'pavimento': 'Cimento', 'profundidade': '1.0', 'troca': '', 'diametro': ''},
+        {'codigo': '313', 'pavimento': 'Terra', 'profundidade': '2.5', 'troca': '', 'diametro': ''},
+        {'codigo': '313', 'pavimento': 'Cimento', 'profundidade': '1.25', 'troca': '', 'diametro': ''}, # Limite superior
+        {'codigo': '313', 'pavimento': 'Cimento', 'profundidade': '1.26', 'troca': '', 'diametro': ''}, # Logo acima do limite
+        {'codigo': '313', 'pavimento': 'Cimento', 'profundidade': '4.0', 'troca': '', 'diametro': ''}, # Fora do range
+        {'codigo': '319', 'pavimento': 'ASFALTICO', 'profundidade': '0.8', 'troca': 'sem troca', 'diametro': ''},
+        {'codigo': '320 (rec)', 'pavimento': 'ASFALTICO', 'profundidade': '0.8', 'troca': '', 'diametro': '600'},
+    ]
+    resultados = processar_codigos(test_data)
+    for res in resultados:
+        print(res)
