@@ -23,7 +23,7 @@
             margin-bottom: 1.5rem;
         }
         /* Ajuste esta regra para que labels, selects e inputs tenham a mesma aparência geral */
-        label, select, input[type="text"] { 
+        label, select, input[type="text"] {
             display: block;
             width: 100%;
             margin-top: 1rem;
@@ -104,32 +104,16 @@
             const codigo = document.getElementById('codigo').value;
             const extras = document.getElementById('extras');
 
-            // --- Gerenciamento dos Containers de Campos Extras ---
-            // IDs de todos os containers de select de pavimento
-            const allPavimentoSelectContainers = [
-                'pavimento_313_container',
-                'pavimento_319_container',
-                'pavimento_320_container',
-                'pavimento_321_container',
-                'pavimento_343_container' 
-            ];
-            // IDs de todos os containers de select de troca
-            const allTrocaSelectContainers = [
-                'troca_319_container',
-                'troca_321_container'
-            ];
-            // Containers de campos de entrada manual (profundidade, mts_tubo_batido, diametro)
-            const standardInputContainers = [
-                'profundidade_container',
-                'diametro_container',
-                'mts_tubo_batido_container'
-            ];
+            const allPavimentoSelects = ['pavimento_313_select', 'pavimento_319_select', 'pavimento_320_select', 'pavimento_321_select', 'pavimento_343_select'];
+            const allTrocaSelects = ['troca_319_select', 'troca_321_select'];
+            const allInputFields = ['profundidade', 'diametro', 'mts_tubo_batido'];
 
-            // 1. Esconder TODOS os containers de campos extras no início
+            // 1. Esconder TODOS os containers de campos extras e desabilitar os selects e limpar inputs
             [
-                ...allPavimentoSelectContainers,
-                ...allTrocaSelectContainers,
-                ...standardInputContainers
+                'pavimento_313_container', 'pavimento_319_container', 'pavimento_320_container',
+                'pavimento_321_container', 'pavimento_343_container', 'troca_319_container',
+                'troca_321_container', 'profundidade_container', 'diametro_container',
+                'mts_tubo_batido_container'
             ].forEach(id => {
                 const element = document.getElementById(id);
                 if (element) {
@@ -138,59 +122,70 @@
             });
             extras.style.display = 'none'; // Esconde o container geral de extras
 
-            // --- Limpeza dos Valores dos Campos ---
-            // Resetar o valor de CADA select e input específico para vazio
-            // (Isso é importante porque o "name" é o mesmo para todos os selects de "pavimento" e "troca")
-            const allPavimentoSelects = ['pavimento_313_select', 'pavimento_319_select', 'pavimento_320_select', 'pavimento_321_select', 'pavimento_343_select'];
-            const allTrocaSelects = ['troca_319_select', 'troca_321_select'];
-            const allInputFields = ['profundidade', 'diametro', 'mts_tubo_batido'];
-
+            // Limpa e desabilita todos os selects de pavimento/troca e inputs
             [...allPavimentoSelects, ...allTrocaSelects].forEach(id => {
                 const element = document.getElementById(id);
                 if (element) {
                     element.value = ''; // Reseta o select para a primeira opção (vazia)
+                    element.disabled = true; // DESABILITA O SELECT
                 }
             });
             allInputFields.forEach(id => {
                 const element = document.getElementById(id);
                 if (element) {
                     element.value = ''; // Limpa inputs de texto
+                    element.disabled = true; // DESABILITA O INPUT
                 }
             });
 
 
-            // 3. Mostrar campos específicos com base no código selecionado
+            // 3. Mostrar e HABILITAR campos específicos com base no código selecionado
             if (['313', '319', '321', '320', '343'].includes(codigo)) {
                 extras.style.display = 'block'; // Mostra o contêiner geral 'extras'
 
                 if (codigo === '313') {
                     document.getElementById('pavimento_313_container').style.display = 'block';
+                    document.getElementById('pavimento_313_select').disabled = false; // HABILITA
                     document.getElementById('profundidade_container').style.display = 'block';
-                    // Conforme solicitado, sem campo 'Troca' para 313
-                } else if (codigo === '319') { 
+                    document.getElementById('profundidade').disabled = false; // HABILITA
+                } else if (codigo === '319') {
                     document.getElementById('pavimento_319_container').style.display = 'block';
+                    document.getElementById('pavimento_319_select').disabled = false; // HABILITA
                     document.getElementById('troca_319_container').style.display = 'block';
+                    document.getElementById('troca_319_select').disabled = false; // HABILITA
                     document.getElementById('profundidade_container').style.display = 'block';
+                    document.getElementById('profundidade').disabled = false; // HABILITA
                     document.getElementById('mts_tubo_batido_container').style.display = 'block';
-                } else if (codigo === '321') { 
+                    document.getElementById('mts_tubo_batido').disabled = false; // HABILITA
+                } else if (codigo === '321') {
                     document.getElementById('pavimento_321_container').style.display = 'block';
+                    document.getElementById('pavimento_321_select').disabled = false; // HABILITA
                     document.getElementById('troca_321_container').style.display = 'block';
+                    document.getElementById('troca_321_select').disabled = false; // HABILITA
                     document.getElementById('profundidade_container').style.display = 'block';
+                    document.getElementById('profundidade').disabled = false; // HABILITA
                     document.getElementById('mts_tubo_batido_container').style.display = 'block';
+                    document.getElementById('mts_tubo_batido').disabled = false; // HABILITA
                 } else if (codigo === '320') {
                     document.getElementById('diametro_container').style.display = 'block';
+                    document.getElementById('diametro').disabled = false; // HABILITA
                     document.getElementById('pavimento_320_container').style.display = 'block';
+                    document.getElementById('pavimento_320_select').disabled = false; // HABILITA
                     document.getElementById('profundidade_container').style.display = 'block';
+                    document.getElementById('profundidade').disabled = false; // HABILITA
                 } else if (codigo === '343') {
                     document.getElementById('diametro_container').style.display = 'block';
+                    document.getElementById('diametro').disabled = false; // HABILITA
                     document.getElementById('pavimento_343_container').style.display = 'block';
+                    document.getElementById('pavimento_343_select').disabled = false; // HABILITA
                     document.getElementById('profundidade_container').style.display = 'block';
+                    document.getElementById('profundidade').disabled = false; // HABILITA
                 }
             }
         }
 
         window.onload = function() {
-            mostrarCamposExtras(); 
+            mostrarCamposExtras();
             document.getElementById('codigo').addEventListener('change', mostrarCamposExtras);
         };
     </script>
@@ -212,10 +207,10 @@
         <form method="POST" action="{{ url_for('codificar') }}">
             <label for="codigo">Escolha o código desejado:</label>
             <select name="codigo" id="codigo" required>
-                <option value="">Selecione um código</option> 
+                <option value="">Selecione um código</option>
                 {# Usamos .split(' ')[0] para pegar apenas o número do código (ex: "313" de "313 codigos") #}
                 {% for codigo_completo in codigos %}
-                    <option value="{{ codigo_completo.split(' ')[0] }}">{{ codigo_completo }}</option> 
+                    <option value="{{ codigo_completo.split(' ')[0] }}">{{ codigo_completo }}</option>
                 {% endfor %}
             </select>
 
@@ -276,7 +271,7 @@
                         <option value="TROCA TOTAL">TROCA TOTAL</option>
                     </select>
                 </div>
-                
+
                 <div id="troca_321_container">
                     <label for="troca_321_select">Troca (Código 321):</label>
                     <select name="troca" id="troca_321_select">
