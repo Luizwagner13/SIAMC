@@ -136,7 +136,8 @@ def processar_codigos(lista_itens_adicionados):
                 output_final.append(f'{codigo_gerado} - 1 unidade')
                 print(f"DEBUG: 313 - Código gerado: {codigo_gerado}")
             else:
-                error_msg = f'313 - Erro: Não foi possível determinar o código para Pavimento: {item.get("pavimento")}, Profundidade: {item.get("profundidade")}. Verifique os valores.')
+                # LINHA CORRIGIDA AQUI: Removido o ')' extra no final
+                error_msg = f'313 - Erro: Não foi possível determinar o código para Pavimento: {item.get("pavimento")}, Profundidade: {item.get("profundidade")}. Verifique os valores.'
                 output_final.append(error_msg)
                 print(f"DEBUG: 313 - ERRO: {error_msg}")
         
