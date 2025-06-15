@@ -80,7 +80,7 @@
 
         <!-- Processamento -->
         <div class="row mb-4">
-            <div class="col-md-4 mb-3">
+            <div class="col-md-6 mb-3">
                 <div class="card shadow-sm">
                     <div class="card-body text-center">
                         <h5 class="card-title"><i class="bi bi-gear"></i> Gerar Planilha de Dados</h5>
@@ -90,21 +90,13 @@
                     </div>
                 </div>
             </div>
-            <div class="col-md-4 mb-3">
+            <div class="col-md-6 mb-3">
                 <div class="card shadow-sm">
                     <div class="card-body text-center">
                         <h5 class="card-title"><i class="bi bi-arrow-clockwise"></i> Atualizar Medição</h5>
                         <form action="{{ url_for('atualizar_medicao') }}" method="POST">
                             <button type="submit" class="btn btn-success">Atualizar</button>
                         </form>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4 mb-3">
-                <div class="card shadow-sm">
-                    <div class="card-body text-center">
-                        <h5 class="card-title"><i class="bi bi-clipboard-plus"></i> Codificação de O.S.</h5>
-                        <a href="{{ url_for('codificar') }}" class="btn btn-secondary w-100">Codificar Ordens</a>
                     </div>
                 </div>
             </div>
