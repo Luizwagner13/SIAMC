@@ -29,7 +29,7 @@
             font-size: 1rem;
         }
         button {
-            width: 48%;
+            width: 48%; /* Ajuste para ter dois botões na mesma linha */
             padding: 1rem;
             font-size: 1rem;
             margin-top: 1rem;
@@ -89,7 +89,8 @@
             document.getElementById('profundidade_label').style.display = 'none';
             document.getElementById('diametro_label').style.display = 'none';
 
-            if (['313','319','321','320','343'].includes(codigo)) {
+            // Ajuste aqui para incluir '320 (rec)' e '343' conforme a lista do Python
+            if (['313','319','321','320 (rec)','343'].includes(codigo)) {
                 extras.style.display = 'block';
 
                 if (codigo === '313') {
@@ -107,7 +108,7 @@
 
                     document.getElementById('profundidade').style.display = 'block';
                     document.getElementById('profundidade_label').style.display = 'block';
-                } else if (codigo === '320') {
+                } else if (codigo === '320 (rec)') { // Use o nome completo '320 (rec)'
                     document.getElementById('diametro').style.display = 'block';
                     document.getElementById('diametro_label').style.display = 'block';
 
@@ -116,7 +117,7 @@
 
                     document.getElementById('pavimento').style.display = 'block';
                     document.getElementById('pavimento_label').style.display = 'block';
-                } else if (codigo === '343') {
+                } else if (codigo === '343') { // Adicionado '343'
                     document.getElementById('diametro').style.display = 'block';
                     document.getElementById('diametro_label').style.display = 'block';
 
@@ -124,6 +125,7 @@
                     document.getElementById('profundidade_label').style.display = 'block';
                 }
             } else {
+                // Limpa os campos quando não são exibidos
                 document.getElementById('pavimento').value = '';
                 document.getElementById('troca').value = '';
                 document.getElementById('profundidade').value = '';
@@ -172,8 +174,7 @@
             </div>
 
             <div style="display:flex; justify-content: space-between;">
-                <button type="submit" name="add_codigo">Adicionar Código</button>
-                <button type="submit" name="finalizar">Codificar</button>
+                <button type="submit" name="adicionar_codigo">Adicionar Código</button> <button type="submit" name="finalizar">Finalizar Codificação</button>
             </div>
         </form>
 
@@ -192,17 +193,22 @@
                 <tbody>
                     {% for item in codigos_adicionados %}
                     <tr>
-                        <td>{{ item.codigo }}</td>
-                        <td>{{ item.pavimento if item.pavimento else '-' }}</td>
-                        <td>{{ item.troca if item.troca else '-' }}</td>
-                        <td>{{ item.profundidade if item.profundidade else '-' }}</td>
-                        <td>{{ item.diametro if item.diametro else '-' }}</td>
+                        <td>{{ item.get('codigo', '-') }}</td>
+                        <td>{{ item.get('pavimento', '-') }}</td>
+                        <td>{{ item.get('troca', '-') }}</td>
+                        <td>{{ item.get('profundidade', '-') }}</td>
+                        <td>{{ item.get('diametro', '-') }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
         {% else %}
             <p>Nenhum código adicionado ainda.</p>
+        {% endif %}
+
+        {% if texto_codificado %}
+            <h2>Resultado da Codificação</h2>
+            <pre>{{ texto_codificado }}</pre>
         {% endif %}
     </div>
 </body>

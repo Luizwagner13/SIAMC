@@ -291,42 +291,50 @@ def codificar():
         flash('Faça login para acessar a codificação.', 'erro')
         return redirect(url_for('login'))
 
+    # Códigos disponíveis, ajustados para bater com o JS no codificar.html
     codigos_disponiveis = [
         '313', '319', '320 (rec)', '321', '322', '323', '324',
-        '325', '326', '327', '328', '329', '330', '331'
+        '325', '326', '327', '328', '329', '330', '331', '343' # Adicionado 343 para bater com o JS
     ]
 
     if 'codigos_adicionados' not in session:
         session['codigos_adicionados'] = []
 
     if request.method == 'POST':
-        if 'adicionar_codigo' in request.form:
+        # Verifique o nome correto do botão
+        if 'adicionar_codigo' in request.form: # Alterado de 'add_codigo'
             codigo = request.form.get('codigo')
             pavimento = request.form.get('pavimento')
             troca = request.form.get('troca')
             profundidade = request.form.get('profundidade')
+            diametro = request.form.get('diametro') # Captura o campo de diâmetro
 
-            if codigo == '313':
-                linha = f'{codigo};{pavimento or ""};{troca or ""}'
-            elif codigo == '320 (rec)':
-                linha = f'{codigo};{pavimento or ""};{troca or ""};{profundidade or ""}'
-            else:
-                linha = codigo
+            # Armazene as informações como um dicionário para fácil acesso no template
+            item_codificado = {
+                'codigo': codigo,
+                'pavimento': pavimento,
+                'troca': troca,
+                'profundidade': profundidade,
+                'diametro': diametro
+            }
 
-            codigos_atualizados = session['codigos_adicionados']
-            codigos_atualizados.append(linha)
+            codigos_atualizados = session.get('codigos_adicionados', [])
+            codigos_atualizados.append(item_codificado)
             session['codigos_adicionados'] = codigos_atualizados
 
             flash('Código adicionado!', 'sucesso')
             return redirect(url_for('codificar'))
 
         elif 'finalizar' in request.form:
-            texto_codificado = '\n'.join(session.get('codigos_adicionados', []))
-            flash('Códigos finalizados!', 'sucesso')
-            session.pop('codigos_adicionados', None)
+            # Aqui você processaria os códigos adicionados, talvez gerando um arquivo de texto
+            # Por enquanto, apenas os remove da sessão e exibe uma mensagem
+            texto_codificado = '\n'.join([f"{item['codigo']};{item.get('pavimento', '')};{item.get('troca', '')};{item.get('profundidade', '')};{item.get('diametro', '')}" for item in session.get('codigos_adicionados', [])])
+            flash('Códigos finalizados! Abaixo o texto gerado.', 'sucesso')
+            session.pop('codigos_adicionados', None) # Limpa a sessão após finalizar
             return render_template('codificar.html', codigos=codigos_disponiveis, texto_codificado=texto_codificado)
 
-    return render_template('codificar.html', codigos=codigos_disponiveis, texto_codificado=None)
+    # Ao carregar a página (GET), passe os códigos adicionados da sessão para exibição
+    return render_template('codificar.html', codigos=codigos_disponiveis, codigos_adicionados=session.get('codigos_adicionados', []), texto_codificado=None)
 
 if __name__ == '__main__':
     app.run(debug=True)
