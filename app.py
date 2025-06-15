@@ -6,7 +6,7 @@ import json
 from datetime import datetime
 
 from dividir_pdf import dividir_pdf_bp
-from processar_codificacao import processar_codigos # Esta importação é crucial para chamar a função
+from processar_codificacao import processar_codigos
 
 app = Flask(__name__)
 app.secret_key = 'segredo123'
@@ -99,7 +99,7 @@ def upload_pdf():
 def upload_medicao():
     if 'user' not in session:
         flash('Faça login para enviar a medição.', 'erro')
-        return redirect(url_for('login'))
+        return redirect(url_for('dashboard'))
 
     file = request.files.get('medicao')
     if not file or not file.filename.endswith('.xlsx'):
@@ -285,7 +285,6 @@ def admin():
 def dividir_pdf_link():
     return redirect(url_for('dividir_pdf_bp.dividir_pdf_route'))
 
-# Rota codificar atualizada com sessão para múltiplos códigos e campos extras
 @app.route('/codificar', methods=['GET', 'POST'])
 def codificar():
     if 'user' not in session:
@@ -330,19 +329,18 @@ def codificar():
             print(f"DEBUG app.py: Itens para processar (antes de processar_codigos): {itens_para_processar}")
 
             try:
-                # AQUI É A MUDANÇA PRINCIPAL: Chamar a função processar_codigos
                 codigos_finalizados_output = processar_codigos(itens_para_processar)
                 texto_codificado = '\n'.join(codigos_finalizados_output)
                 flash('Códigos finalizados! Abaixo o texto gerado.', 'sucesso')
+                print(f"DEBUG app.py: texto_codificado antes de render_template: '{texto_codificado}'") # NOVO DEBUG AQUI
             except Exception as e:
                 texto_codificado = f"Erro ao processar códigos: {e}"
                 flash(f'Ocorreu um erro ao finalizar a codificação: {e}', 'erro')
+                print(f"DEBUG app.py: Erro no processamento: {e}") # NOVO DEBUG AQUI
 
             session.pop('codigos_adicionados', None)
-            # Passar codigos_adicionados vazio para limpar a tabela após finalizar
             return render_template('codificar.html', codigos=codigos_disponiveis, texto_codificado=texto_codificado, codigos_adicionados=[])
 
-    # Para requisições GET ou após um redirecionamento, garantir que a lista de adicionados seja passada
     return render_template('codificar.html', codigos=codigos_disponiveis, codigos_adicionados=session.get('codigos_adicionados', []), texto_codificado=None)
 
 if __name__ == '__main__':
