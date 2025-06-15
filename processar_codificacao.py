@@ -150,8 +150,9 @@ def processar_codigos(lista_itens_adicionados):
             profundidade_formatada = f"{profundidade_val:.2f}".replace('.', ',') if profundidade_val is not None else ""
             linha_formatada = f"320 (rec);{pavimento_str};{troca_str};{profundidade_formatada}"
 
-        # --- Processamento para '319 codigos' ---
-        elif codigo_original == '319 codigos':
+        # --- Processamento para '319 codigos' (AGORA CORRIGIDO PARA '319') ---
+        # AQUI ESTÁ A CORREÇÃO PRINCIPAL:
+        elif codigo_original == '319': # <-- ALTERADO DE '319 codigos' PARA '319'
             pavimento_norm = None
             if pavimento_input: # Apenas tenta strip/upper se houver valor
                 pavimento_norm = str(pavimento_input).strip().upper()
@@ -214,7 +215,7 @@ def processar_codigos(lista_itens_adicionados):
                 if mts_tubo_batido_val is not None and mts_tubo_batido_val > 0:
                     linha_formatada += f";{codigo_excedente};{mts_tubo_batido_val:.2f}".replace('.', ',')
             # Se codigo_base não foi encontrado, a linha_formatada já terá a mensagem de erro da lógica acima.
-        
+            
         else: # Para outros códigos que não exigem lógica específica (como 300, 343, 329, etc.)
             linha_formatada = codigo_original # Apenas o código como está na lista
 
@@ -240,19 +241,19 @@ if __name__ == '__main__':
         {'codigo': '320 (rec) codigos', 'pavimento': None, 'troca': None, 'profundidade': None, 'mts_tubo_batido': '', 'diametro': ''}, # Esperado: 320 (rec);;;
         
         # Testes para 319 (com Pavimento, Troca, Profundidade e MTS Tubo Batido)
-        {'codigo': '319 codigos', 'pavimento': 'Passeio', 'troca': 'Sem Troca', 'profundidade': '1.5', 'mts_tubo_batido': '2.0', 'diametro': '100'}, # Esperado: 319;3811;3811;2,00
-        {'codigo': '319 codigos', 'pavimento': 'Rua', 'troca': 'Troca Total', 'profundidade': '4,25', 'mts_tubo_batido': '1.0', 'diametro': '200'},   # Esperado: 319;3873;3871;1,00
-        {'codigo': '319 codigos', 'pavimento': 'Asfaltico', 'troca': 'Troca Parcial', 'profundidade': '0.8', 'mts_tubo_batido': '0.5', 'diametro': ''},# Esperado: 319;3890;3891;0,50
+        {'codigo': '319', 'pavimento': 'Passeio', 'troca': 'Sem Troca', 'profundidade': '1.5', 'mts_tubo_batido': '2.0', 'diametro': '100'}, # Esperado: 319;3811;3811;2,00
+        {'codigo': '319', 'pavimento': 'Rua', 'troca': 'Troca Total', 'profundidade': '4,25', 'mts_tubo_batido': '1.0', 'diametro': '200'},    # Esperado: 319;3873;3871;1,00
+        {'codigo': '319', 'pavimento': 'Asfaltico', 'troca': 'Troca Parcial', 'profundidade': '0.8', 'mts_tubo_batido': '0.5', 'diametro': ''},# Esperado: 319;3890;3891;0,50
         
         # Testes 319 - Profundidade > 5.00m (deve pegar o último código base da faixa 3.00-5.00)
-        {'codigo': '319 codigos', 'pavimento': 'Passeio', 'troca': 'Sem Troca', 'profundidade': '6.0', 'mts_tubo_batido': '1.5', 'diametro': ''}, # Esperado: 319;3813;3811;1,50
+        {'codigo': '319', 'pavimento': 'Passeio', 'troca': 'Sem Troca', 'profundidade': '6.0', 'mts_tubo_batido': '1.5', 'diametro': ''}, # Esperado: 319;3813;3811;1,50
         
         # Testes 319 - Com valores incompletos/inválidos
-        {'codigo': '319 codigos', 'pavimento': None, 'troca': 'Sem Troca', 'profundidade': '1.0', 'mts_tubo_batido': '1.5', 'diametro': ''}, # Esperado: ERRO
-        {'codigo': '319 codigos', 'pavimento': 'Passeio', 'troca': None, 'profundidade': '1.0', 'mts_tubo_batido': '1.5', 'diametro': ''}, # Esperado: ERRO
-        {'codigo': '319 codigos', 'pavimento': 'Passeio', 'troca': 'Sem Troca', 'profundidade': None, 'mts_tubo_batido': '1.5', 'diametro': ''}, # Esperado: ERRO
-        {'codigo': '319 codigos', 'pavimento': 'Passeio', 'troca': 'Invalida', 'profundidade': '1.0', 'mts_tubo_batido': '1.5', 'diametro': ''}, # Esperado: ERRO
-        {'codigo': '319 codigos', 'pavimento': 'Rua', 'troca': 'Sem Troca', 'profundidade': 'abc', 'mts_tubo_batido': '1.5', 'diametro': ''}, # Esperado: ERRO (profundidade inválida)
+        {'codigo': '319', 'pavimento': None, 'troca': 'Sem Troca', 'profundidade': '1.0', 'mts_tubo_batido': '1.5', 'diametro': ''}, # Esperado: ERRO
+        {'codigo': '319', 'pavimento': 'Passeio', 'troca': None, 'profundidade': '1.0', 'mts_tubo_batido': '1.5', 'diametro': ''}, # Esperado: ERRO
+        {'codigo': '319', 'pavimento': 'Passeio', 'troca': 'Sem Troca', 'profundidade': None, 'mts_tubo_batido': '1.5', 'diametro': ''}, # Esperado: ERRO
+        {'codigo': '319', 'pavimento': 'Passeio', 'troca': 'Invalida', 'profundidade': '1.0', 'mts_tubo_batido': '1.5', 'diametro': ''}, # Esperado: ERRO
+        {'codigo': '319', 'pavimento': 'Rua', 'troca': 'Sem Troca', 'profundidade': 'abc', 'mts_tubo_batido': '1.5', 'diametro': ''}, # Esperado: ERRO (profundidade inválida)
         
         # Testes para outros códigos (que não precisam de lógica específica)
         {'codigo': '300 codigos', 'pavimento': None, 'troca': None, 'profundidade': None, 'mts_tubo_batido': None, 'diametro': None}, # Esperado: 300 codigos
