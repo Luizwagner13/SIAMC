@@ -11,184 +11,104 @@
             padding: 2rem;
         }
         .container {
-            max-width: 600px;
+            max-width: 800px; /* Aumentei a largura para melhor visualização */
             margin: 0 auto;
             background: #fff;
             border-radius: 10px;
             padding: 2rem;
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
         }
-        h1 {
+        h1, h2 {
             text-align: center;
             margin-bottom: 1.5rem;
+            color: #333;
         }
-        /* Ajuste esta regra para que labels, selects e inputs tenham a mesma aparência geral */
         label, select, input[type="text"] {
             display: block;
             width: 100%;
             margin-top: 1rem;
             font-size: 1rem;
-            padding: 0.5rem; /* Adicionado para dar um pouco de preenchimento nos inputs/selects */
-            border: 1px solid #ccc; /* Adicionado uma borda padrão */
-            border-radius: 4px; /* Cantos arredondados */
-            box-sizing: border-box; /* Garante que padding e border não aumentem a largura total */
+            padding: 0.75rem; /* Ajustei o padding */
+            border: 1px solid #ccc;
+            border-radius: 6px; /* Ajustei o arredondamento */
+            box-sizing: border-box; /* Garante que padding e border sejam incluídos na largura */
         }
-        button {
-            width: 48%; /* Alterado para ocupar menos espaço e dar lugar a um botão único */
-            padding: 1rem;
-            font-size: 1rem;
-            margin-top: 1rem;
-            background-color: #198754;
-            color: white;
+        .btn-group {
+            display: flex;
+            justify-content: space-between;
+            gap: 1rem; /* Espaçamento entre os botões */
+            margin-top: 1.5rem;
+        }
+        .btn-group button, .full-width-btn {
+            padding: 0.8rem 1.5rem;
             border: none;
-            border-radius: 5px;
+            border-radius: 6px;
             cursor: pointer;
+            font-size: 1rem;
+            font-weight: bold;
+            transition: background-color 0.3s ease;
         }
-        button.full-width-btn { /* Nova classe para o botão de "Codificar" */
-            width: 100%; /* Botão "Codificar" ocupa a largura total */
-            margin-top: 20px; /* Mais espaçamento para o botão final */
-            background-color: #007bff; /* Uma cor diferente para destaque */
+        .add-btn {
+            background-color: #28a745;
+            color: white;
+            flex-grow: 1; /* Faz o botão de adicionar ocupar espaço */
         }
-        button.full-width-btn:hover {
+        .add-btn:hover {
+            background-color: #218838;
+        }
+        .clear-btn {
+            background-color: #dc3545;
+            color: white;
+            flex-grow: 1; /* Faz o botão de limpar ocupar espaço */
+        }
+        .clear-btn:hover {
+            background-color: #c82333;
+        }
+        .full-width-btn {
+            width: 100%;
+            background-color: #007bff;
+            color: white;
+            margin-top: 2rem;
+        }
+        .full-width-btn:hover {
             background-color: #0056b3;
-        }
-        #extras {
-            margin-top: 1rem;
-            padding: 1rem;
-            background: #e9ecef;
-            border-radius: 5px;
-            /* display: none; */ /* Será controlado pelo JavaScript */
         }
         table {
             width: 100%;
-            margin-top: 2rem;
             border-collapse: collapse;
+            margin-top: 2rem;
         }
         th, td {
-            border: 1px solid #dee2e6;
-            padding: 0.5rem;
-            text-align: center;
+            border: 1px solid #ddd;
+            padding: 0.8rem;
+            text-align: left;
         }
         th {
-            background-color: #198754;
-            color: white;
-        }
-        .flash-message {
-            padding: 1rem;
-            margin-bottom: 1rem;
-            border-radius: 5px;
-            color: #155724;
-            background-color: #d4edda;
-            border: 1px solid #c3e6cb;
-        }
-        /* Estilos para o resultado da codificação (importante que estejam aqui ou no style.css externo) */
-        .resultado-codificacao {
-            margin-top: 30px;
-            padding: 20px;
-            border: 1px dashed #007bff;
-            background-color: #e9f5ff;
-            border-radius: 8px;
-        }
-
-        .resultado-codificacao pre {
-            white-space: pre-wrap; /* Permite que o texto quebre linhas longas */
-            word-wrap: break-word; /* Quebra palavras muito longas */
-            font-size: 1.1em;
-            line-height: 1.5;
-            color: #28a745; /* Cor verde para o resultado */
+            background-color: #f2f2f2;
             font-weight: bold;
         }
-    </style>
-    <script>
-        function mostrarCamposExtras() {
-            const codigo = document.getElementById('codigo').value;
-            const extras = document.getElementById('extras');
-
-            const allPavimentoSelects = ['pavimento_313_select', 'pavimento_319_select', 'pavimento_320_select', 'pavimento_321_select', 'pavimento_343_select'];
-            const allTrocaSelects = ['troca_319_select', 'troca_321_select'];
-            const allInputFields = ['profundidade', 'diametro', 'mts_tubo_batido'];
-
-            // 1. Esconder TODOS os containers de campos extras e desabilitar os selects e limpar inputs
-            [
-                'pavimento_313_container', 'pavimento_319_container', 'pavimento_320_container',
-                'pavimento_321_container', 'pavimento_343_container', 'troca_319_container',
-                'troca_321_container', 'profundidade_container', 'diametro_container',
-                'mts_tubo_batido_container'
-            ].forEach(id => {
-                const element = document.getElementById(id);
-                if (element) {
-                    element.style.display = 'none';
-                }
-            });
-            extras.style.display = 'none'; // Esconde o container geral de extras
-
-            // Limpa e desabilita todos os selects de pavimento/troca e inputs
-            [...allPavimentoSelects, ...allTrocaSelects].forEach(id => {
-                const element = document.getElementById(id);
-                if (element) {
-                    element.value = ''; // Reseta o select para a primeira opção (vazia)
-                    element.disabled = true; // DESABILITA O SELECT
-                }
-            });
-            allInputFields.forEach(id => {
-                const element = document.getElementById(id);
-                if (element) {
-                    element.value = ''; // Limpa inputs de texto
-                    element.disabled = true; // DESABILITA O INPUT
-                }
-            });
-
-
-            // 3. Mostrar e HABILITAR campos específicos com base no código selecionado
-            if (['313', '319', '321', '320', '343'].includes(codigo)) {
-                extras.style.display = 'block'; // Mostra o contêiner geral 'extras'
-
-                if (codigo === '313') {
-                    document.getElementById('pavimento_313_container').style.display = 'block';
-                    document.getElementById('pavimento_313_select').disabled = false; // HABILITA
-                    document.getElementById('profundidade_container').style.display = 'block';
-                    document.getElementById('profundidade').disabled = false; // HABILITA
-                } else if (codigo === '319') {
-                    document.getElementById('pavimento_319_container').style.display = 'block';
-                    document.getElementById('pavimento_319_select').disabled = false; // HABILITA
-                    document.getElementById('troca_319_container').style.display = 'block';
-                    document.getElementById('troca_319_select').disabled = false; // HABILITA
-                    document.getElementById('profundidade_container').style.display = 'block';
-                    document.getElementById('profundidade').disabled = false; // HABILITA
-                    document.getElementById('mts_tubo_batido_container').style.display = 'block';
-                    document.getElementById('mts_tubo_batido').disabled = false; // HABILITA
-                } else if (codigo === '321') {
-                    document.getElementById('pavimento_321_container').style.display = 'block';
-                    document.getElementById('pavimento_321_select').disabled = false; // HABILITA
-                    document.getElementById('troca_321_container').style.display = 'block';
-                    document.getElementById('troca_321_select').disabled = false; // HABILITA
-                    document.getElementById('profundidade_container').style.display = 'block';
-                    document.getElementById('profundidade').disabled = false; // HABILITA
-                    document.getElementById('mts_tubo_batido_container').style.display = 'block';
-                    document.getElementById('mts_tubo_batido').disabled = false; // HABILITA
-                } else if (codigo === '320') {
-                    document.getElementById('diametro_container').style.display = 'block';
-                    document.getElementById('diametro').disabled = false; // HABILITA
-                    document.getElementById('pavimento_320_container').style.display = 'block';
-                    document.getElementById('pavimento_320_select').disabled = false; // HABILITA
-                    document.getElementById('profundidade_container').style.display = 'block';
-                    document.getElementById('profundidade').disabled = false; // HABILITA
-                } else if (codigo === '343') {
-                    document.getElementById('diametro_container').style.display = 'block';
-                    document.getElementById('diametro').disabled = false; // HABILITA
-                    document.getElementById('pavimento_343_container').style.display = 'block';
-                    document.getElementById('pavimento_343_select').disabled = false; // HABILITA
-                    document.getElementById('profundidade_container').style.display = 'block';
-                    document.getElementById('profundidade').disabled = false; // HABILITA
-                }
-            }
+        .resultado-codificacao {
+            margin-top: 2rem;
+            background-color: #e9ecef;
+            padding: 1.5rem;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
         }
-
-        window.onload = function() {
-            mostrarCamposExtras();
-            document.getElementById('codigo').addEventListener('change', mostrarCamposExtras);
-        };
-    </script>
+        pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-family: monospace;
+            font-size: 1rem;
+            color: #333;
+        }
+        .hidden-field {
+            display: none;
+        }
+        /* Estilos para campos específicos */
+        #diametro_field, #pavimento_field, #troca_field, #profundidade_field, #mts_tubo_batido_field {
+            display: none; /* Inicia oculto e o JS controla a visibilidade */
+        }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -205,100 +125,61 @@
         {% endwith %}
 
         <form method="POST" action="{{ url_for('codificar') }}">
-            <label for="codigo">Escolha o código desejado:</label>
-            <select name="codigo" id="codigo" required>
+            <label for="codigo_selecionado">Selecione o Código:</label>
+            <select id="codigo_selecionado" name="codigo">
                 <option value="">Selecione um código</option>
-                {# Usamos .split(' ')[0] para pegar apenas o número do código (ex: "313" de "313 codigos") #}
                 {% for codigo_completo in codigos %}
                     <option value="{{ codigo_completo.split(' ')[0] }}">{{ codigo_completo }}</option>
                 {% endfor %}
             </select>
 
-            <div id="extras">
-                <div id="pavimento_313_container">
-                    <label for="pavimento_313_select">Pavimento (Código 313):</label>
-                    <select name="pavimento" id="pavimento_313_select">
-                        <option value="">Selecione o Pavimento</option>
-                        <option value="CIMENTO">CIMENTO</option>
-                        <option value="TERRA">TERRA</option>
-                    </select>
-                </div>
-
-                <div id="pavimento_319_container">
-                    <label for="pavimento_319_select">Pavimento (Código 319):</label>
-                    <select name="pavimento" id="pavimento_319_select">
+            <div id="campos_dinamicos">
+                <div id="pavimento_field" class="hidden-field">
+                    <label for="pavimento">Pavimento:</label>
+                    <select id="pavimento" name="pavimento">
                         <option value="">Selecione o Pavimento</option>
                         <option value="PASSEIO">PASSEIO</option>
                         <option value="RUA">RUA</option>
                         <option value="TERRA">TERRA</option>
-                    </select>
-                </div>
-
-                <div id="pavimento_320_container">
-                    <label for="pavimento_320_select">Pavimento (Código 320):</label>
-                    <select name="pavimento" id="pavimento_320_select">
-                        <option value="">Selecione o Pavimento</option>
+                        <option value="CIMENTO">CIMENTO</option>
                         <option value="REVESTIDO">REVESTIDO</option>
                         <option value="SEM REVESTIMENTO">SEM REVESTIMENTO</option>
-                    </select>
-                </div>
-
-                <div id="pavimento_321_container">
-                    <label for="pavimento_321_select">Pavimento (Código 321):</label>
-                    <select name="pavimento" id="pavimento_321_select">
-                        <option value="">Selecione o Pavimento</option>
                         <option value="PISTA COM PAVIMENTO">PISTA COM PAVIMENTO</option>
                         <option value="PASSEIO REVESTIDO">PASSEIO REVESTIDO</option>
                         <option value="SEM PAVIMENTO">SEM PAVIMENTO</option>
                     </select>
                 </div>
 
-                <div id="pavimento_343_container">
-                    <label for="pavimento_343_select">Pavimento (Código 343):</label>
-                    <select name="pavimento" id="pavimento_343_select">
-                        <option value="">Selecione o Pavimento</option>
-                        <option value="REVESTIDO">REVESTIDO</option>
-                        <option value="SEM REVESTIMENTO">SEM REVESTIMENTO</option>
-                    </select>
-                </div>
-
-                <div id="troca_319_container">
-                    <label for="troca_319_select">Troca (Código 319):</label>
-                    <select name="troca" id="troca_319_select">
-                        <option value="">Selecione a Troca</option>
+                <div id="troca_field" class="hidden-field">
+                    <label for="troca">Tipo de Troca:</label>
+                    <select id="troca" name="troca">
+                        <option value="">Selecione o Tipo de Troca</option>
                         <option value="SEM TROCA">SEM TROCA</option>
                         <option value="TROCA PARCIAL">TROCA PARCIAL</option>
                         <option value="TROCA TOTAL">TROCA TOTAL</option>
                     </select>
                 </div>
 
-                <div id="troca_321_container">
-                    <label for="troca_321_select">Troca (Código 321):</label>
-                    <select name="troca" id="troca_321_select">
-                        <option value="">Selecione a Troca</option>
-                        <option value="SEM TROCA">SEM TROCA</option>
-                        <option value="TROCA PARCIAL">TROCA PARCIAL</option>
-                        <option value="TROCA TOTAL">TROCA TOTAL</option>
-                    </select>
+                <div id="profundidade_field" class="hidden-field">
+                    <label for="profundidade">Profundidade (ex: 1.55):</label>
+                    <input type="text" id="profundidade" name="profundidade" placeholder="Ex: 1.55" />
                 </div>
 
-                <div id="profundidade_container">
-                    <label for="profundidade">Profundidade:</label>
-                    <input type="text" name="profundidade" id="profundidade" placeholder="Informe a profundidade (ex: 1.25)">
+                <div id="mts_tubo_batido_field" class="hidden-field">
+                    <label for="mts_tubo_batido">MTS de Tubo Batido (ex: 9):</label>
+                    <input type="text" id="mts_tubo_batido" name="mts_tubo_batido" placeholder="Ex: 9" />
                 </div>
 
-                <div id="mts_tubo_batido_container">
-                    <label for="mts_tubo_batido">MTS de Tubo Batido:</label>
-                    <input type="text" name="mts_tubo_batido" id="mts_tubo_batido" placeholder="Informe os MTS de Tubo Batido (ex: 2.5)">
-                </div>
-
-                <div id="diametro_container">
+                <div id="diametro_field" class="hidden-field">
                     <label for="diametro">Diâmetro:</label>
-                    <input type="text" name="diametro" id="diametro" placeholder="Informe o diâmetro (ex: 100)">
+                    <input type="text" id="diametro" name="diametro" placeholder="Diâmetro" />
                 </div>
             </div>
-
-            <button type="submit" name="add_codigo">Adicionar Código</button>
+            
+            <div class="btn-group">
+                <button type="submit" name="add_codigo" class="add-btn">Adicionar Código</button>
+                <button type="submit" name="clear_codigos" class="clear-btn">Limpar Códigos Adicionados</button>
+            </div>
         </form>
 
         {% if codigos_adicionados %}
@@ -341,5 +222,70 @@
             </div>
         {% endif %}
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const codigoSelect = document.getElementById('codigo_selecionado');
+            const pavimentoField = document.getElementById('pavimento_field');
+            const trocaField = document.getElementById('troca_field');
+            const profundidadeField = document.getElementById('profundidade_field');
+            const mtsTuboBatidoField = document.getElementById('mts_tubo_batido_field');
+            const diametroField = document.getElementById('diametro_field');
+            
+            // Referências aos inputs/selects reais para limpar valores
+            const pavimentoInput = document.getElementById('pavimento');
+            const trocaInput = document.getElementById('troca');
+            const profundidadeInput = document.getElementById('profundidade');
+            const mtsTuboBatidoInput = document.getElementById('mts_tubo_batido');
+            const diametroInput = document.getElementById('diametro');
+
+            // Função para ocultar todos os campos específicos e limpar seus valores
+            function hideAllSpecificFields() {
+                pavimentoField.style.display = 'none';
+                trocaField.style.display = 'none';
+                profundidadeField.style.display = 'none';
+                mtsTuboBatidoField.style.display = 'none';
+                diametroField.style.display = 'none';
+                
+                // Limpar valores para evitar envio de dados de campos ocultos
+                pavimentoInput.value = "";
+                trocaInput.value = "";
+                profundidadeInput.value = "";
+                mtsTuboBatidoInput.value = "";
+                diametroInput.value = "";
+            }
+
+            // Função para atualizar a visibilidade dos campos com base no código selecionado
+            function updateFieldVisibility() {
+                hideAllSpecificFields(); // Oculta todos primeiro
+
+                const selectedCodigo = codigoSelect.value;
+
+                // Lógica de visibilidade baseada nos valores dos códigos
+                if (selectedCodigo === '319') {
+                    pavimentoField.style.display = 'block';
+                    trocaField.style.display = 'block';
+                    profundidadeField.style.display = 'block';
+                    mtsTuboBatidoField.style.display = 'block';
+                } else if (selectedCodigo === '321' || selectedCodigo === '343') { // 321, 343
+                    pavimentoField.style.display = 'block';
+                    trocaField.style.display = 'block'; // Adicionado troca para 321, 343 se necessário
+                    diametroField.style.display = 'block';
+                } else if (selectedCodigo === '313') { // 313
+                    diametroField.style.display = 'block';
+                } else if (selectedCodigo === '320' || selectedCodigo === '300') { // 320, 300
+                    diametroField.style.display = 'block';
+                    pavimentoField.style.display = 'block';
+                }
+                // Adicione mais blocos 'else if' para outros códigos que necessitem de campos específicos
+            }
+
+            // Adiciona o event listener para o select
+            codigoSelect.addEventListener('change', updateFieldVisibility);
+
+            // Chama a função uma vez ao carregar a página para definir o estado inicial
+            updateFieldVisibility();
+        });
+    </script>
 </body>
 </html>
