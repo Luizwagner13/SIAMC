@@ -23,8 +23,7 @@ else:
 
 @app.route('/')
 def home():
-    if 'username' in session: # Redireciona para a codificação se já estiver logado
-        return redirect(url_for('codificar'))
+    # Esta rota redirecionava para login no seu original. Mantendo assim.
     return redirect(url_for('login'))
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -40,13 +39,10 @@ def login():
                 valid_until = datetime.strptime(valid_until_str, '%Y-%m-%d').date()
                 today = datetime.today().date()
                 if today > valid_until:
-                    # Renderiza página de expirado se a conta estiver vencida
                     return render_template('expirado.html', username=username, validade=valid_until_str)
            
             # Autenticação e criação da pasta de usuário
-            # NOTA: O campo password no users.json deveria ser 'password_hash' para usar check_password_hash
-            # Assumindo que 'password' no users.json é na verdade o hash
-            if check_password_hash(user_data['password'], password): 
+            if check_password_hash(user_data['password'], password):
                 session['username'] = username
                 session['valid_until'] = user_data.get('valid_until')
                 user_folder = os.path.join('user_data', username)
@@ -65,7 +61,6 @@ def login():
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
-    # Mantendo o registro desativado conforme seu código
     flash('O cadastro de novos usuários está desativado. Entre em contato com o administrador.', 'erro')
     return redirect(url_for('login'))
 
@@ -82,7 +77,7 @@ def dashboard():
 def logout():
     session.pop('username', None)
     session.pop('valid_until', None)
-    session.pop('codigos_adicionados', None) # Limpa códigos adicionados na sessão
+    session.pop('codigos_adicionados', None) # Limpa códigos adicionados
     flash('Logout realizado com sucesso.', 'sucesso')
     return redirect(url_for('login'))
 
@@ -155,7 +150,6 @@ def criar_planilha():
         flash('Erro ao executar o script de criação da planilha.', 'erro')
         return redirect(url_for('dashboard'))
 
-    # Remove PDFs após processamento
     for filename in os.listdir(user_folder):
         if filename.endswith('.pdf'):
             os.remove(os.path.join(user_folder, filename))
@@ -257,7 +251,7 @@ def admin():
                 flash('Usuário já existe.', 'erro')
             else:
                 users[username] = {
-                    'password': generate_password_hash(nova_senha), # Assumindo que você quer gerar hash para novas senhas
+                    'password': generate_password_hash(nova_senha),
                     'valid_until': validade,
                     'is_admin': is_admin
                 }
@@ -274,7 +268,7 @@ def admin():
                 users[username]['valid_until'] = validade
                 users[username]['is_admin'] = is_admin
                 if nova_senha:
-                    users[username]['password'] = generate_password_hash(nova_senha) # Gera hash se a senha for alterada
+                    users[username]['password'] = generate_password_hash(nova_senha)
                 with open(USERS_FILE, 'w') as f:
                     json.dump(users, f, indent=2)
                 flash(f'Usuário {username} atualizado.', 'sucesso')
@@ -447,4 +441,6 @@ def codificar():
 # ===================================================================================================================
 
 if __name__ == '__main__':
+    # Esta é a configuração que você tinha. Mantenho para não causar novos problemas.
+    # Se você for para produção no Render, considere a sugestão de usar os.environ.get('PORT')
     app.run(debug=True)
