@@ -342,6 +342,10 @@ def codificar():
         elif 'finalizar' in request.form: # Botão "Codificar e Gerar Resultado" foi clicado (do novo formulário)
             itens_para_processar = session.get('codigos_adicionados', [])
             
+            # --- START DEBUG PRINTS ---
+            print(f"DEBUG app.py: Itens para processar (antes de processar_codigos): {itens_para_processar}")
+            # --- END DEBUG PRINTS ---
+
             if not itens_para_processar: # <<< NOVA LINHA: Verifica se há itens para processar
                 flash('Nenhum código para codificar. Adicione itens à lista primeiro.', 'erro')
                 return render_template('codificar.html', 
@@ -353,10 +357,19 @@ def codificar():
                 codigos_finalizados_output = processar_codigos(itens_para_processar)
                 texto_codificado = '\n'.join(codigos_finalizados_output)
                 flash('Códigos finalizados! Abaixo o texto gerado.', 'sucesso')
+                
+                # --- START DEBUG PRINTS ---
+                print(f"DEBUG app.py: texto_codificado antes de render_template: '{texto_codificado}'")
+                # --- END DEBUG PRINTS ---
+
             except Exception as e:
                 # Em caso de erro, exibe a mensagem de erro e uma flash message
                 texto_codificado = f"Erro ao processar códigos: {e}"
                 flash(f'Ocorreu um erro ao finalizar a codificação: {e}', 'erro')
+                
+                # --- START DEBUG PRINTS ---
+                print(f"DEBUG app.py: Erro no processamento: {e}")
+                # --- END DEBUG PRINTS ---
             
             # Limpa a lista de códigos na sessão APÓS a finalização
             session.pop('codigos_adicionados', None) 
