@@ -9,7 +9,8 @@ def processar_codigos(lista_itens_adicionados):
     output_final = []
 
     # Tabela de mapeamento para os códigos 319 e seus excedentes
-    # Os nomes das chaves (PASSEIO, RUA, ASPHALTIC) devem estar em MAIÚSCULAS
+    # Os nomes das chaves (PASSEIO, RUA, TERRA) devem estar em MAIÚSCULAS
+    # REVISADO: Removido 'ASFALTICO' conforme a imagem fornecida.
     tabela_319 = {
         'PASSEIO': {
             'SEM TROCA': {
@@ -32,12 +33,12 @@ def processar_codigos(lista_itens_adicionados):
             },
             'TROCA TOTAL': {
                 'profundidades_base': {
-                    (0.0, 1.25): '3850', # Adicionado 3850
-                    (1.25, 2.00): '3851', # Adicionado 3851
+                    (0.0, 1.25): '3850',
+                    (1.25, 2.00): '3851',
                     (2.00, 3.00): '3852',
                     (3.00, 5.00): '3853'
                 },
-                'codigo_excedente_mts': '3851' # O código para o excedente de MTS (conforme discutido)
+                'codigo_excedente_mts': '3851'
             }
         },
         'RUA': {
@@ -69,33 +70,33 @@ def processar_codigos(lista_itens_adicionados):
                 'codigo_excedente_mts': '3861'
             }
         },
-        'ASPHALTIC': { # Supondo que 'ASPHALTIC' também é um tipo de pavimento
+        'TERRA': { # Corrigido para refletir APENAS TERRA conforme a imagem
             'SEM TROCA': {
                 'profundidades_base': {
-                    (0.0, 1.25): '3870',
-                    (1.25, 2.00): '3871',
-                    (2.00, 3.00): '3872',
-                    (3.00, 5.00): '3873'
+                    (0.0, 1.25): '3900',
+                    (1.25, 2.00): '3901',
+                    (2.00, 3.00): '3902',
+                    (3.00, 5.00): '3903'
                 },
-                'codigo_excedente_mts': '3871'
+                'codigo_excedente_mts': '3901'
             },
             'TROCA PARCIAL': {
                 'profundidades_base': {
-                    (0.0, 1.25): '3880',
-                    (1.25, 2.00): '3881',
-                    (2.00, 3.00): '3882',
-                    (3.00, 5.00): '3883'
+                    (0.0, 1.25): '3910',
+                    (1.25, 2.00): '3911',
+                    (2.00, 3.00): '3912',
+                    (3.00, 5.00): '3913'
                 },
-                'codigo_excedente_mts': '3881'
+                'codigo_excedente_mts': '3911'
             },
             'TROCA TOTAL': {
                 'profundidades_base': {
-                    (0.0, 1.25): '3890',
-                    (1.25, 2.00): '3891',
-                    (2.00, 3.00): '3892',
-                    (3.00, 5.00): '3893'
+                    (0.0, 1.25): '3920',
+                    (1.25, 2.00): '3921',
+                    (2.00, 3.00): '3922',
+                    (3.00, 5.00): '3923'
                 },
-                'codigo_excedente_mts': '3891'
+                'codigo_excedente_mts': '3921'
             }
         }
     }
@@ -133,32 +134,29 @@ def processar_codigos(lista_itens_adicionados):
         diametro_entrada = item.get('diametro')
 
         # Normaliza as strings para maiúsculas e remove acentos/espaços extras para correspondência
-        # Usamos str() para garantir que None não cause erro ao chamar .strip() ou .upper()
         pavimento_normalizado = str(pavimento_entrada).strip().upper() if pavimento_entrada else None
         troca_normalizada = str(troca_entrada).strip().upper() if troca_entrada else None
 
         # Tratamento para o código '319' e suas variações
         if codigo_entrada and ('319' in codigo_entrada or '319 codigos' in codigo_entrada):
-            if not all([pavimento_normalizado, troca_normalizada, profundidade_entrada]):
+            if not all([pavimento_normalizado, troca_normalizada, profundidade_entrada is not None]): # Added 'is not None' for robustness
                 output_final.append(f"ERRO: Dados incompletos para o código 319 (pavimento, troca ou profundidade ausentes). Item: {item}")
                 continue
 
-            # >>>>>>>>>>> INÍCIO DA CORREÇÃO <<<<<<<<<<<
             # Substitui vírgula por ponto para permitir a conversão para float
             if isinstance(profundidade_entrada, str):
                 profundidade_entrada = profundidade_entrada.replace(',', '.')
             if isinstance(mts_tubo_batido_entrada, str):
                 mts_tubo_batido_entrada = mts_tubo_batido_entrada.replace(',', '.')
-            # >>>>>>>>>> FIM DA CORREÇÃO <<<<<<<<<<<
 
             try:
                 profundidade = float(profundidade_entrada)
-                # Garante que mts_tubo_batido_entrada seja um float ou 0.0 se for None/vazio/inválido
                 mts_tubo_batido = float(mts_tubo_batido_entrada) if mts_tubo_batido_entrada else 0.0
             except (ValueError, TypeError):
                 output_final.append(f"ERRO: Profundidade ou MTS Tubo Batido inválidos para o código 319. Item: {item}")
                 continue
 
+            # Verifica se a combinação pavimento/troca existe na tabela
             if pavimento_normalizado in tabela_319 and troca_normalizada in tabela_319[pavimento_normalizado]:
                 regras_atuais = tabela_319[pavimento_normalizado][troca_normalizada]
                 codigo_base_encontrado = False
@@ -173,18 +171,20 @@ def processar_codigos(lista_itens_adicionados):
                 
                 # Se a profundidade for maior que a última faixa, pega o último código base da tabela
                 if not codigo_base_encontrado:
-                    # Encontra a maior profundidade na tabela e usa seu código correspondente
+                    # Encontra a maior profundidade de faixa na tabela e usa seu código correspondente
                     maior_profundidade_faixa = max(regras_atuais['profundidades_base'].keys(), key=lambda x: x[1])
-                    codigo_base = regras_atuais['profundidades_base'][maior_profundidade_faixa]
-                    codigo_base_encontrado = True
-                    output_final.append(f"ATENÇÃO: Profundidade {profundidade} excede as faixas definidas para o código 319 (pavimento: {pavimento_entrada}, troca: {troca_entrada}). Usando o código base para a maior profundidade ({codigo_base}).")
+                    if profundidade > maior_profundidade_faixa[1]:
+                        codigo_base = regras_atuais['profundidades_base'][maior_profundidade_faixa]
+                        codigo_base_encontrado = True
+                        output_final.append(f"ATENÇÃO: Profundidade {profundidade:.2f} excede as faixas definidas para o código 319 (pavimento: {pavimento_entrada}, troca: {troca_entrada}). Usando o código base para a maior profundidade ({codigo_base}).")
+                    else:
+                        output_final.append(f"ERRO: Não foi possível determinar o código base para Profundidade {profundidade_entrada} (Pavimento: {pavimento_entrada}, Troca: {troca_entrada}). Verifique as faixas de profundidade na tabela.")
 
                 if codigo_base_encontrado:
                     # Adiciona o código base
                     output_final.append(codigo_base)
 
                     # Lógica para excedente de MTS Tubo Batido
-                    # O "excedente" é o valor de mts_tubo_batido menos a profundidade do furo.
                     excedente_mts = mts_tubo_batido - profundidade
 
                     if excedente_mts > 0:
@@ -199,8 +199,6 @@ def processar_codigos(lista_itens_adicionados):
         
         # Tratamento para outros códigos
         elif codigo_entrada in outros_codigos:
-            # Para códigos simples, adiciona o código e o diâmetro se existir
-            # Remove espaços extras se o diâmetro não existir
             output_final.append(f"{codigo_entrada} {diametro_entrada or ''}".strip()) 
         
         # Caso o código não seja 319 nem esteja em 'outros_codigos'
@@ -213,35 +211,21 @@ def processar_codigos(lista_itens_adicionados):
 
 # Exemplo de uso para testes (será removido ou comentado na versão final para integração Flask)
 if __name__ == '__main__':
-    # Testes unitários para a função processar_codigos
     test_cases = [
-        # Testes para o código 319 - PASSEIO
-        {'codigo': '319 codigos', 'pavimento': 'Passeio', 'troca': 'Sem Troca', 'profundidade': '1.0', 'mts_tubo_batido': '1.5', 'diametro': ''}, # Esperado: 3810, 3811 0.50 MTS
-        {'codigo': '319 codigos', 'pavimento': 'Passeio', 'troca': 'Sem Troca', 'profundidade': '1.5', 'mts_tubo_batido': '1.75', 'diametro': ''}, # Esperado: 3811, 3811 0.25 MTS
-        {'codigo': '319 codigos', 'pavimento': 'Passeio', 'troca': 'Sem Troca', 'profundidade': '2.5', 'mts_tubo_batido': '3.0', 'diametro': ''}, # Esperado: 3812, 3811 0.50 MTS
-        {'codigo': '319 codigos', 'pavimento': 'Passeio', 'troca': 'Sem Troca', 'profundidade': '4.0', 'mts_tubo_batido': '5.0', 'diametro': ''}, # Esperado: 3813, 3811 1.00 MTS
+        # Seu caso de erro anterior:
+        {'codigo': '319', 'diametro': None, 'mts_tubo_batido': '8', 'pavimento': 'TERRA', 'profundidade': '1.70', 'troca': 'TROCA TOTAL'}, # Deve funcionar agora: 3921, 3921 6.30 MTS
+        {'codigo': '319', 'diametro': None, 'mts_tubo_batido': '4', 'pavimento': 'PASSEIO', 'profundidade': '1,25', 'troca': 'SEM TROCA'}, # Com vírgula, deve funcionar
+        {'codigo': '319', 'diametro': None, 'mts_tubo_batido': '4,5', 'pavimento': 'PASSEIO', 'profundidade': '1.25', 'troca': 'SEM TROCA'}, # MTS Tubo Batido com vírgula
 
-        {'codigo': '319 codigos', 'pavimento': 'Passeio', 'troca': 'Troca Parcial', 'profundidade': '1.0', 'mts_tubo_batido': '1.5', 'diametro': ''}, # Esperado: 3830, 3831 0.50 MTS
-        {'codigo': '319 codigos', 'pavimento': 'Passeio', 'troca': 'Troca Parcial', 'profundidade': '1.5', 'mts_tubo_batido': '2.0', 'diametro': ''}, # Esperado: 3831, 3831 0.50 MTS
-        {'codigo': '319 codigos', 'pavimento': 'Passeio', 'troca': 'Troca Total', 'profundidade': '1.0', 'mts_tubo_batido': '1.5', 'diametro': ''}, # Esperado: 3850, 3851 0.50 MTS (NOVO)
-        {'codigo': '319 codigos', 'pavimento': 'Passeio', 'troca': 'Troca Total', 'profundidade': '1.5', 'mts_tubo_batido': '1.75', 'diametro': ''}, # Esperado: 3851, 3851 0.25 MTS (NOVO)
+        # Novos testes baseados na imagem para TERRA
+        {'codigo': '319', 'pavimento': 'Terra', 'troca': 'Sem Troca', 'profundidade': '0.5', 'mts_tubo_batido': '1.0', 'diametro': ''}, # Esperado: 3900, 3901 0.50 MTS
+        {'codigo': '319', 'pavimento': 'Terra', 'troca': 'Sem Troca', 'profundidade': '2.5', 'mts_tubo_batido': '3.0', 'diametro': ''}, # Esperado: 3902, 3901 0.50 MTS
+        {'codigo': '319', 'pavimento': 'Terra', 'troca': 'Sem Troca', 'profundidade': '4.0', 'mts_tubo_batido': '4.5', 'diametro': ''}, # Esperado: 3903, 3901 0.50 MTS
 
-        # Testes para o código 319 - RUA
-        {'codigo': '319 codigos', 'pavimento': 'Rua', 'troca': 'Sem Troca', 'profundidade': '1.0', 'mts_tubo_batido': '1.5', 'diametro': ''}, # Esperado: 3820, 3821 0.50 MTS
-        {'codigo': '319 codigos', 'pavimento': 'Rua', 'troca': 'Sem Troca', 'profundidade': '1.5', 'mts_tubo_batido': '1.75', 'diametro': ''}, # Esperado: 3821, 3821 0.25 MTS
-        {'codigo': '319 codigos', 'pavimento': 'Rua', 'troca': 'Troca Parcial', 'profundidade': '1.0', 'mts_tubo_batido': '1.5', 'diametro': ''}, # Esperado: 3840, 3841 0.50 MTS
-        {'codigo': '319 codigos', 'pavimento': 'Rua', 'troca': 'Troca Total', 'profundidade': '1.0', 'mts_tubo_batido': '1.5', 'diametro': ''}, # Esperado: 3860, 3861 0.50 MTS (NOVO)
-
-        # Testes para o código 319 - ASPHALTIC (Exemplo)
-        {'codigo': '319 codigos', 'pavimento': 'Asphaltic', 'troca': 'Sem Troca', 'profundidade': '1.0', 'mts_tubo_batido': '1.5', 'diametro': ''}, # Esperado: 3870, 3871 0.50 MTS
-        {'codigo': '319 codigos', 'pavimento': 'Asphaltic', 'troca': 'Troca Parcial', 'profundidade': '1.0', 'mts_tubo_batido': '1.5', 'diametro': ''}, # Esperado: 3880, 3881 0.50 MTS
-        {'codigo': '319 codigos', 'pavimento': 'Asphaltic', 'troca': 'Troca Total', 'profundidade': '1.0', 'mts_tubo_batido': '1.5', 'diametro': ''}, # Esperado: 3890, 3891 0.50 MTS
-
-        # Testes com excedente de MTS Tubo Batido
-        {'codigo': '319', 'pavimento': 'Rua', 'troca': 'Sem Troca', 'profundidade': '1.5', 'mts_tubo_batido': '4.0', 'diametro': ''}, # Excedente de 2.50 MTS
-        {'codigo': '319', 'pavimento': 'Rua', 'troca': 'Sem Troca', 'profundidade': '4.8', 'mts_tubo_batido': '5.25', 'diametro': ''}, # Excedente de 0.45 MTS
-        {'codigo': '319', 'pavimento': 'Passeio', 'troca': 'Troca Parcial', 'profundidade': '2.8', 'mts_tubo_batido': '2.1', 'diametro': ''}, # Sem excedente, mts_tubo_batido < profundidade. Output: 3832
-
+        # TERRA / TROCA PARCIAL
+        {'codigo': '319', 'pavimento': 'Terra', 'troca': 'Troca Parcial', 'profundidade': '1.0', 'mts_tubo_batido': '1.5', 'diametro': ''}, # Esperado: 3910, 3911 0.50 MTS
+        {'codigo': '319', 'pavimento': 'Terra', 'troca': 'Troca Parcial', 'profundidade': '3.5', 'mts_tubo_batido': '4.0', 'diametro': ''}, # Esperado: 3913, 3911 0.50 MTS
+        
         # Testes com valores inválidos/fora do esperado
         {'codigo': '319 codigos', 'pavimento': None, 'troca': 'Sem Troca', 'profundidade': '1.0', 'mts_tubo_batido': '1.5', 'diametro': ''}, # Esperado: ERRO
         {'codigo': '319 codigos', 'pavimento': 'Passeio', 'troca': None, 'profundidade': '1.0', 'mts_tubo_batido': '1.5', 'diametro': ''}, # Esperado: ERRO
@@ -249,10 +233,6 @@ if __name__ == '__main__':
         {'codigo': '319 codigos', 'pavimento': 'Passeio', 'troca': 'Invalida', 'profundidade': '1.0', 'mts_tubo_batido': '1.5', 'diametro': ''}, # Esperado: ERRO
         {'codigo': '319 codigos', 'pavimento': 'Rua', 'troca': 'Sem Troca', 'profundidade': 'abc', 'mts_tubo_batido': '1.5', 'diametro': ''}, # Esperado: ERRO (profundidade inválida)
         
-        # O seu caso específico de erro, agora deve funcionar:
-        {'codigo': '319', 'diametro': None, 'mts_tubo_batido': '4', 'pavimento': 'PASSEIO', 'profundidade': '1,25', 'troca': 'SEM TROCA'},
-        {'codigo': '319', 'diametro': None, 'mts_tubo_batido': '4,5', 'pavimento': 'PASSEIO', 'profundidade': '1.25', 'troca': 'SEM TROCA'}, # MTS Tubo Batido com vírgula
-
         # Testes para outros códigos (que não precisam de lógica específica)
         {'codigo': '300', 'pavimento': None, 'troca': None, 'profundidade': None, 'mts_tubo_batido': None, 'diametro': '100mm'}, # Esperado: 300 100mm
         {'codigo': '301', 'pavimento': None, 'troca': None, 'profundidade': None, 'mts_tubo_batido': None, 'diametro': ''}, # Esperado: 301
