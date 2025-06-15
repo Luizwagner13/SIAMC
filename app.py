@@ -7,7 +7,7 @@ from datetime import datetime
 
 from dividir_pdf import dividir_pdf_bp
 from processar_codificacao import processar_codigos
-from codificar import get_codigos_disponiveis # <<< NOVA LINHA: Importa a função para obter os códigos disponíveis
+from codificar import get_codigos_disponiveis # <<< Importa a função para obter os códigos disponíveis
 
 app = Flask(__name__)
 app.secret_key = 'segredo123'
@@ -23,6 +23,8 @@ else:
 
 @app.route('/')
 def home():
+    if 'username' in session: # Redireciona para a codificação se já estiver logado
+        return redirect(url_for('codificar'))
     return redirect(url_for('login'))
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -38,12 +40,15 @@ def login():
                 valid_until = datetime.strptime(valid_until_str, '%Y-%m-%d').date()
                 today = datetime.today().date()
                 if today > valid_until:
-                    return render_template('expirado.html', username=username, validade=valid_until_str) # Corrigido para valid_until_str
-            
+                    # Renderiza página de expirado se a conta estiver vencida
+                    return render_template('expirado.html', username=username, validade=valid_until_str)
+           
             # Autenticação e criação da pasta de usuário
-            if check_password_hash(user_data['password'], password):
-                session['username'] = username # Corrigido para 'username' em vez de 'user' para consistência
-                session['valid_until'] = user_data.get('valid_until') # Armazena valid_until na sessão
+            # NOTA: O campo password no users.json deveria ser 'password_hash' para usar check_password_hash
+            # Assumindo que 'password' no users.json é na verdade o hash
+            if check_password_hash(user_data['password'], password): 
+                session['username'] = username
+                session['valid_until'] = user_data.get('valid_until')
                 user_folder = os.path.join('user_data', username)
                 os.makedirs(user_folder, exist_ok=True)
                 flash('Login realizado com sucesso!', 'sucesso')
@@ -60,32 +65,33 @@ def login():
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
+    # Mantendo o registro desativado conforme seu código
     flash('O cadastro de novos usuários está desativado. Entre em contato com o administrador.', 'erro')
     return redirect(url_for('login'))
 
 @app.route('/dashboard')
 def dashboard():
-    if 'username' in session: # Corrigido para 'username'
-        username = session['username'] # Corrigido para 'username'
-        validade = session.get('valid_until', 'Indefinido') # Pega da sessão para consistência
+    if 'username' in session:
+        username = session['username']
+        validade = session.get('valid_until', 'Indefinido')
         return render_template('dashboard.html', user=username, validade=validade)
     flash('Faça login para acessar sua área.', 'erro')
     return redirect(url_for('login'))
 
 @app.route('/logout')
 def logout():
-    session.pop('username', None) # Corrigido para 'username'
-    session.pop('valid_until', None) # Limpa valid_until
-    session.pop('codigos_adicionados', None) # Limpa códigos adicionados
+    session.pop('username', None)
+    session.pop('valid_until', None)
+    session.pop('codigos_adicionados', None) # Limpa códigos adicionados na sessão
     flash('Logout realizado com sucesso.', 'sucesso')
     return redirect(url_for('login'))
 
 @app.route('/upload_pdf', methods=['POST'])
 def upload_pdf():
-    if 'username' not in session: # Corrigido para 'username'
+    if 'username' not in session:
         return redirect(url_for('login'))
 
-    username = session['username'] # Corrigido para 'username'
+    username = session['username']
     user_folder = os.path.join('user_data', username)
     os.makedirs(user_folder, exist_ok=True)
 
@@ -101,7 +107,7 @@ def upload_pdf():
 
 @app.route('/upload_medicao', methods=['POST'])
 def upload_medicao():
-    if 'username' not in session: # Corrigido para 'username'
+    if 'username' not in session:
         flash('Faça login para enviar a medição.', 'erro')
         return redirect(url_for('dashboard'))
 
@@ -110,7 +116,7 @@ def upload_medicao():
         flash('Envie um arquivo .xlsx válido.', 'erro')
         return redirect(url_for('dashboard'))
 
-    username = session['username'] # Corrigido para 'username'
+    username = session['username']
     user_folder = os.path.join('user_data', username)
     os.makedirs(user_folder, exist_ok=True)
 
@@ -122,10 +128,10 @@ def upload_medicao():
 
 @app.route('/criar_planilha', methods=['POST'])
 def criar_planilha():
-    if 'username' not in session: # Corrigido para 'username'
+    if 'username' not in session:
         return redirect(url_for('login'))
 
-    username = session['username'] # Corrigido para 'username'
+    username = session['username']
     user_folder = os.path.join('user_data', username)
 
     try:
@@ -149,6 +155,7 @@ def criar_planilha():
         flash('Erro ao executar o script de criação da planilha.', 'erro')
         return redirect(url_for('dashboard'))
 
+    # Remove PDFs após processamento
     for filename in os.listdir(user_folder):
         if filename.endswith('.pdf'):
             os.remove(os.path.join(user_folder, filename))
@@ -158,11 +165,11 @@ def criar_planilha():
 
 @app.route('/baixar_planilha')
 def baixar_planilha():
-    if 'username' not in session: # Corrigido para 'username'
+    if 'username' not in session:
         flash('Faça login para baixar a planilha.', 'erro')
         return redirect(url_for('login'))
 
-    username = session['username'] # Corrigido para 'username'
+    username = session['username']
     user_folder = os.path.join('user_data', username)
     filepath = os.path.join(user_folder, 'informacoes_extraidas.xlsx')
 
@@ -174,11 +181,11 @@ def baixar_planilha():
 
 @app.route('/baixar_medicao')
 def baixar_medicao():
-    if 'username' not in session: # Corrigido para 'username'
+    if 'username' not in session:
         flash('Faça login para baixar a medição.', 'erro')
         return redirect(url_for('login'))
 
-    username = session['username'] # Corrigido para 'username'
+    username = session['username']
     user_folder = os.path.join('user_data', username)
     filepath = os.path.join(user_folder, 'medicao_atualizada.xlsx')
 
@@ -190,11 +197,11 @@ def baixar_medicao():
 
 @app.route('/atualizar_medicao', methods=['POST'])
 def atualizar_medicao():
-    if 'username' not in session: # Corrigido para 'username'
+    if 'username' not in session:
         flash('Faça login para atualizar a medição.', 'erro')
         return redirect(url_for('login'))
 
-    username = session['username'] # Corrigido para 'username'
+    username = session['username']
     user_folder = os.path.join('user_data', username)
 
     caminho_pdf = os.path.join(user_folder, 'informacoes_extraidas.xlsx')
@@ -226,11 +233,11 @@ def atualizar_medicao():
 
 @app.route('/admin', methods=['GET', 'POST'])
 def admin():
-    if 'username' not in session: # Corrigido para 'username'
+    if 'username' not in session:
         flash('Faça login para acessar esta área.', 'erro')
         return redirect(url_for('login'))
 
-    current_user = session['username'] # Corrigido para 'username'
+    current_user = session['username']
     user_data = users.get(current_user)
 
     if not user_data or not user_data.get('is_admin'):
@@ -250,7 +257,7 @@ def admin():
                 flash('Usuário já existe.', 'erro')
             else:
                 users[username] = {
-                    'password': generate_password_hash(nova_senha),
+                    'password': generate_password_hash(nova_senha), # Assumindo que você quer gerar hash para novas senhas
                     'valid_until': validade,
                     'is_admin': is_admin
                 }
@@ -267,7 +274,7 @@ def admin():
                 users[username]['valid_until'] = validade
                 users[username]['is_admin'] = is_admin
                 if nova_senha:
-                    users[username]['password'] = generate_password_hash(nova_senha)
+                    users[username]['password'] = generate_password_hash(nova_senha) # Gera hash se a senha for alterada
                 with open(USERS_FILE, 'w') as f:
                     json.dump(users, f, indent=2)
                 flash(f'Usuário {username} atualizado.', 'sucesso')
@@ -299,54 +306,101 @@ def codificar():
         return redirect(url_for('login'))
 
     # Pega a lista de códigos disponíveis do arquivo 'codificar.py'
-    codigos_disponiveis = get_codigos_disponiveis() # <<< ALTERAÇÃO: Usa a função importada
+    codigos_disponiveis = get_codigos_disponiveis()
 
-    # Inicializa a sessão para 'codigos_adicionados' se não existir
-    if 'codigos_adicionados' not in session:
-        session['codigos_adicionados'] = []
+    # Inicializa a sessão para 'codigos_adicionados' se não existir ou não for uma lista
+    codigos_adicionados = session.get('codigos_adicionados', [])
+    if not isinstance(codigos_adicionados, list):
+        codigos_adicionados = [] # Reseta se estiver corrompido
+        session['codigos_adicionados'] = codigos_adicionados
+        session.modified = True
 
     texto_codificado = None # Variável para armazenar o resultado da codificação final
 
     if request.method == 'POST':
         if 'add_codigo' in request.form: # Botão "Adicionar Código" foi clicado
-            codigo = request.form.get('codigo')
-            
-            # Captura TODOS os campos que podem vir do formulário.
-            # Usamos .get() para evitar KeyError e atribuímos None se o campo não estiver presente ou vazio.
-            pavimento = request.form.get('pavimento')
-            troca = request.form.get('troca')
-            profundidade = request.form.get('profundidade')
-            mts_tubo_batido = request.form.get('mts_tubo_batido') # NOVO CAMPO
-            diametro = request.form.get('diametro')             # NOVO CAMPO
+            codigo_selecionado = request.form.get('codigo') # Campo 'codigo' do select
 
-            # Cria um dicionário para o item com todos os campos possíveis.
-            # Se um campo não foi preenchido/selecionado para um código específico, ele será None.
-            item_codificado = {
-                'codigo': codigo,
-                'pavimento': pavimento if pavimento else None, # <<< ALTERAÇÃO: Garante None se a string for vazia
-                'troca': troca if troca else None,             # <<< ALTERAÇÃO: Garante None se a string for vazia
-                'profundidade': profundidade if profundidade else None, # <<< ALTERAÇÃO: Garante None se a string for vazia
-                'mts_tubo_batido': mts_tubo_batido if mts_tubo_batido else None,
-                'diametro': diametro if diametro else None
-            }
-            
-            # Adiciona o dicionário à lista na sessão
-            codigos_atualizados = session.get('codigos_adicionados', [])
-            codigos_atualizados.append(item_codificado)
-            session['codigos_adicionados'] = codigos_atualizados
-            
+            # Cria um dicionário base para o novo item
+            novo_item = {'codigo': codigo_selecionado}
+
+            # Lógica para preencher campos com base no 'codigo_selecionado'
+            # É fundamental que os 'name' dos inputs/selects no HTML correspondam aqui.
+            if codigo_selecionado == '319 codigos':
+                novo_item['pavimento'] = request.form.get('pavimento') # name="pavimento"
+                novo_item['troca'] = request.form.get('tipo_troca')   # name="tipo_troca" (CORRIGIDO AQUI)
+                novo_item['profundidade'] = request.form.get('profundidade')
+                novo_item['mts_tubo_batido'] = request.form.get('mts_tubo_batido')
+                novo_item['diametro'] = '' # Não se aplica ao 319, mas define para consistência
+            elif codigo_selecionado == '321 codigos':
+                novo_item['pavimento'] = request.form.get('pavimento_321')
+                novo_item['troca'] = request.form.get('tipo_troca_321')
+                novo_item['diametro'] = request.form.get('diametro_321')
+                novo_item['profundidade'] = ''
+                novo_item['mts_tubo_batido'] = ''
+            elif codigo_selecionado == '313 codigos':
+                novo_item['diametro'] = request.form.get('diametro_313')
+                novo_item['pavimento'] = ''
+                novo_item['troca'] = ''
+                novo_item['profundidade'] = ''
+                novo_item['mts_tubo_batido'] = ''
+            elif codigo_selecionado == '320 (rec) codigos':
+                novo_item['diametro'] = request.form.get('diametro_320_rec')
+                novo_item['pavimento'] = request.form.get('pavimento_320_rec')
+                novo_item['troca'] = ''
+                novo_item['profundidade'] = ''
+                novo_item['mts_tubo_batido'] = ''
+            elif codigo_selecionado == '300 codigos':
+                novo_item['diametro'] = request.form.get('diametro_300')
+                novo_item['pavimento'] = request.form.get('pavimento_300')
+                novo_item['troca'] = ''
+                novo_item['profundidade'] = ''
+                novo_item['mts_tubo_batido'] = ''
+            elif codigo_selecionado == '343 codigos':
+                novo_item['diametro'] = request.form.get('diametro_343')
+                novo_item['pavimento'] = request.form.get('pavimento_343')
+                novo_item['troca'] = request.form.get('tipo_troca_343')
+                novo_item['profundidade'] = ''
+                novo_item['mts_tubo_batido'] = ''
+            elif codigo_selecionado == '329 codigos':
+                novo_item['diametro'] = request.form.get('diametro_329')
+                novo_item['pavimento'] = request.form.get('pavimento_329')
+                novo_item['troca'] = request.form.get('tipo_troca_329')
+                novo_item['profundidade'] = ''
+                novo_item['mts_tubo_batido'] = ''
+            else: 
+                # Para outros códigos que não foram explicitamente mapeados acima,
+                # tenta pegar campos genéricos se existirem no formulário.
+                novo_item['pavimento'] = request.form.get('pavimento_generico', '')
+                novo_item['troca'] = request.form.get('tipo_troca_generico', '')
+                novo_item['profundidade'] = request.form.get('profundidade_generico', '')
+                novo_item['mts_tubo_batido'] = request.form.get('mts_tubo_batido_generico', '')
+                novo_item['diametro'] = request.form.get('diametro_generico', '')
+
+            # Converte valores vazios (strings vazias) para None para o processar_codigos
+            for key, value in novo_item.items():
+                if value == '':
+                    novo_item[key] = None
+
+            # Adiciona o dicionário completo à lista na sessão
+            codigos_adicionados.append(novo_item)
+            session['codigos_adicionados'] = codigos_adicionados # Garante que a sessão é atualizada
+            session.modified = True # Marca a sessão como modificada
+
+            # DEBUG: print após adicionar
+            print(f"DEBUG app.py: codigos_adicionados após adicionar: {session['codigos_adicionados']}")
+
             flash('Código adicionado à lista!', 'sucesso')
             # Redireciona para GET para limpar o formulário e exibir a lista atualizada
             return redirect(url_for('codificar'))
 
-        elif 'finalizar' in request.form: # Botão "Codificar e Gerar Resultado" foi clicado (do novo formulário)
+        elif 'finalizar' in request.form: # Botão "Codificar e Gerar Resultado" foi clicado
             itens_para_processar = session.get('codigos_adicionados', [])
             
-            # --- START DEBUG PRINTS ---
+            # DEBUG: print antes de processar
             print(f"DEBUG app.py: Itens para processar (antes de processar_codigos): {itens_para_processar}")
-            # --- END DEBUG PRINTS ---
 
-            if not itens_para_processar: # <<< NOVA LINHA: Verifica se há itens para processar
+            if not itens_para_processar:
                 flash('Nenhum código para codificar. Adicione itens à lista primeiro.', 'erro')
                 return render_template('codificar.html', 
                                        codigos=codigos_disponiveis, 
@@ -354,39 +408,44 @@ def codificar():
 
             try:
                 # Chama a função de processamento (processar_codificacao.py) com a lista de dicionários
+                # NOTA: A função processar_codigos deve retornar uma lista de strings.
                 codigos_finalizados_output = processar_codigos(itens_para_processar)
-                texto_codificado = '\n'.join(codigos_finalizados_output)
+                
+                # Se processar_codigos já retorna uma string, não precisa de '\n'.join()
+                # Se retorna uma lista de strings, então '\n'.join() é necessário.
+                # Assumindo que processar_codigos retorna uma string ou um objeto que pode ser convertido diretamente em string para exibição.
+                # Se for uma lista, descomente a linha abaixo:
+                # texto_codificado = '\n'.join(codigos_finalizados_output)
+                texto_codificado = codigos_finalizados_output # Assumindo que a função já retorna a string formatada
+
                 flash('Códigos finalizados! Abaixo o texto gerado.', 'sucesso')
                 
-                # --- START DEBUG PRINTS ---
-                print(f"DEBUG app.py: texto_codificado antes de render_template: '{texto_codificado}'")
-                # --- END DEBUG PRINTS ---
+                # DEBUG: print do resultado do processamento
+                print(f"DEBUG app.py: Resultado processar_codigos: '{texto_codificado}'")
 
             except Exception as e:
                 # Em caso de erro, exibe a mensagem de erro e uma flash message
                 texto_codificado = f"Erro ao processar códigos: {e}"
                 flash(f'Ocorreu um erro ao finalizar a codificação: {e}', 'erro')
                 
-                # --- START DEBUG PRINTS ---
+                # DEBUG: print de erro
                 print(f"DEBUG app.py: Erro no processamento: {e}")
-                # --- END DEBUG PRINTS ---
             
             # Limpa a lista de códigos na sessão APÓS a finalização
             session.pop('codigos_adicionados', None) 
             
             # Renderiza a página com o resultado (texto_codificado)
-            # A lista de códigos adicionados será vazia no template após o pop da sessão
             return render_template('codificar.html', 
                                    codigos=codigos_disponiveis, 
                                    texto_codificado=texto_codificado,
-                                   codigos_adicionados=[]) # <<< ALTERAÇÃO: Passa lista vazia para limpar a tabela no frontend
-    
+                                   codigos_adicionados=[]) # Passa lista vazia para limpar a tabela no frontend
+            
     # Para requisições GET (visita inicial ou redirecionamento após 'add_codigo')
     # A lista 'codigos_adicionados' é carregada da sessão
     return render_template('codificar.html', 
                            codigos=codigos_disponiveis, 
-                           codigos_adicionados=session.get('codigos_adicionados', []), 
-                           texto_codificado=None) # <<< ALTERAÇÃO: Garante que texto_codificado seja None em GET
+                           codigos_adicionados=codigos_adicionados, # Usa a lista carregada/inicializada
+                           texto_codificado=None)
 
 # ===================================================================================================================
 # FIM DA ROTA /CODIFICAR
