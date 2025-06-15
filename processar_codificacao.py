@@ -133,18 +133,28 @@ def processar_codigos(lista_itens_adicionados):
         diametro_entrada = item.get('diametro')
 
         # Normaliza as strings para maiúsculas e remove acentos/espaços extras para correspondência
-        pavimento_normalizado = pavimento_entrada.strip().upper() if isinstance(pavimento_entrada, str) else None
-        troca_normalizada = troca_entrada.strip().upper() if isinstance(troca_entrada, str) else None
+        # Usamos str() para garantir que None não cause erro ao chamar .strip() ou .upper()
+        pavimento_normalizado = str(pavimento_entrada).strip().upper() if pavimento_entrada else None
+        troca_normalizada = str(troca_entrada).strip().upper() if troca_entrada else None
 
         # Tratamento para o código '319' e suas variações
         if codigo_entrada and ('319' in codigo_entrada or '319 codigos' in codigo_entrada):
             if not all([pavimento_normalizado, troca_normalizada, profundidade_entrada]):
-                output_final.append(f"ERRO: Dados incompletos para o código 319. Item: {item}")
+                output_final.append(f"ERRO: Dados incompletos para o código 319 (pavimento, troca ou profundidade ausentes). Item: {item}")
                 continue
+
+            # >>>>>>>>>>> INÍCIO DA CORREÇÃO <<<<<<<<<<<
+            # Substitui vírgula por ponto para permitir a conversão para float
+            if isinstance(profundidade_entrada, str):
+                profundidade_entrada = profundidade_entrada.replace(',', '.')
+            if isinstance(mts_tubo_batido_entrada, str):
+                mts_tubo_batido_entrada = mts_tubo_batido_entrada.replace(',', '.')
+            # >>>>>>>>>> FIM DA CORREÇÃO <<<<<<<<<<<
 
             try:
                 profundidade = float(profundidade_entrada)
-                mts_tubo_batido = float(mts_tubo_batido_entrada) if mts_tubo_batido_entrada else 0.0 # Garante float, default 0.0
+                # Garante que mts_tubo_batido_entrada seja um float ou 0.0 se for None/vazio/inválido
+                mts_tubo_batido = float(mts_tubo_batido_entrada) if mts_tubo_batido_entrada else 0.0
             except (ValueError, TypeError):
                 output_final.append(f"ERRO: Profundidade ou MTS Tubo Batido inválidos para o código 319. Item: {item}")
                 continue
@@ -169,27 +179,12 @@ def processar_codigos(lista_itens_adicionados):
                     codigo_base_encontrado = True
                     output_final.append(f"ATENÇÃO: Profundidade {profundidade} excede as faixas definidas para o código 319 (pavimento: {pavimento_entrada}, troca: {troca_entrada}). Usando o código base para a maior profundidade ({codigo_base}).")
 
-
                 if codigo_base_encontrado:
                     # Adiciona o código base
                     output_final.append(codigo_base)
 
                     # Lógica para excedente de MTS Tubo Batido
-                    # O "excedente" é o valor de mts_tubo_batido menos o limite superior da faixa de profundidade
-                    # Se mts_tubo_batido for maior que a profundidade, há um excedente.
-                    
-                    # Para a lógica do excedente, precisamos saber qual é o limite superior da faixa de profundidade que gerou o código base.
-                    # Isso é um pouco mais complexo de derivar diretamente do `profundidades_base` apenas com o código.
-                    # Uma abordagem mais robusta seria calcular a diferença com base na profundidade do furo e mts_tubo_batido.
-
-                    # Para o 319, o excedente é em relação ao comprimento do furo (profundidade).
-                    # A regra geral é: se MTS Tubo Batido > Profundidade, calcula-se a diferença.
-                    
-                    # A profundidade da tabela é para determinar o *código base do furo*.
-                    # O `mts_tubo_batido` é para determinar o *excedente*.
-
-                    # Vamos recalcular o excedente com base na profundidade do furo.
-                    # A regra mais recente é: o excedente é mts_tubo_batido - profundidade.
+                    # O "excedente" é o valor de mts_tubo_batido menos a profundidade do furo.
                     excedente_mts = mts_tubo_batido - profundidade
 
                     if excedente_mts > 0:
@@ -199,14 +194,14 @@ def processar_codigos(lista_itens_adicionados):
                             output_final.append(f"{codigo_excedente} {excedente_mts:.2f} MTS")
                         else:
                             output_final.append(f"ATENÇÃO: Código de excedente MTS não definido para {pavimento_entrada} / {troca_entrada}.")
-                else:
-                    output_final.append(f"ERRO: Não foi possível determinar o código base para Profundidade {profundidade_entrada} (Pavimento: {pavimento_entrada}, Troca: {troca_entrada}).")
             else:
                 output_final.append(f"ERRO: Combinação de Pavimento ('{pavimento_entrada}') e/ou Troca ('{troca_entrada}') inválida para o código 319. Item: {item}")
         
         # Tratamento para outros códigos
         elif codigo_entrada in outros_codigos:
-            output_final.append(f"{codigo_entrada} {diametro_entrada or ''}".strip()) # Adiciona diâmetro se existir
+            # Para códigos simples, adiciona o código e o diâmetro se existir
+            # Remove espaços extras se o diâmetro não existir
+            output_final.append(f"{codigo_entrada} {diametro_entrada or ''}".strip()) 
         
         # Caso o código não seja 319 nem esteja em 'outros_codigos'
         elif codigo_entrada:
@@ -254,6 +249,10 @@ if __name__ == '__main__':
         {'codigo': '319 codigos', 'pavimento': 'Passeio', 'troca': 'Invalida', 'profundidade': '1.0', 'mts_tubo_batido': '1.5', 'diametro': ''}, # Esperado: ERRO
         {'codigo': '319 codigos', 'pavimento': 'Rua', 'troca': 'Sem Troca', 'profundidade': 'abc', 'mts_tubo_batido': '1.5', 'diametro': ''}, # Esperado: ERRO (profundidade inválida)
         
+        # O seu caso específico de erro, agora deve funcionar:
+        {'codigo': '319', 'diametro': None, 'mts_tubo_batido': '4', 'pavimento': 'PASSEIO', 'profundidade': '1,25', 'troca': 'SEM TROCA'},
+        {'codigo': '319', 'diametro': None, 'mts_tubo_batido': '4,5', 'pavimento': 'PASSEIO', 'profundidade': '1.25', 'troca': 'SEM TROCA'}, # MTS Tubo Batido com vírgula
+
         # Testes para outros códigos (que não precisam de lógica específica)
         {'codigo': '300', 'pavimento': None, 'troca': None, 'profundidade': None, 'mts_tubo_batido': None, 'diametro': '100mm'}, # Esperado: 300 100mm
         {'codigo': '301', 'pavimento': None, 'troca': None, 'profundidade': None, 'mts_tubo_batido': None, 'diametro': ''}, # Esperado: 301
