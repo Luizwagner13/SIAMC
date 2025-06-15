@@ -34,7 +34,7 @@
             box-sizing: border-box; /* Garante que padding e border não aumentem a largura total */
         }
         button {
-            width: 48%;
+            width: 48%; /* Alterado para ocupar menos espaço e dar lugar a um botão único */
             padding: 1rem;
             font-size: 1rem;
             margin-top: 1rem;
@@ -44,8 +44,13 @@
             border-radius: 5px;
             cursor: pointer;
         }
-        button:hover {
-            background-color: #157347;
+        button.full-width-btn { /* Nova classe para o botão de "Codificar" */
+            width: 100%; /* Botão "Codificar" ocupa a largura total */
+            margin-top: 20px; /* Mais espaçamento para o botão final */
+            background-color: #007bff; /* Uma cor diferente para destaque */
+        }
+        button.full-width-btn:hover {
+            background-color: #0056b3;
         }
         #extras {
             margin-top: 1rem;
@@ -204,7 +209,7 @@
             {% endif %}
         {% endwith %}
 
-        <form method="POST">
+        <form method="POST" action="{{ url_for('codificar') }}">
             <label for="codigo">Escolha o código desejado:</label>
             <select name="codigo" id="codigo" required>
                 <option value="">Selecione um código</option> 
@@ -298,10 +303,7 @@
                 </div>
             </div>
 
-            <div style="display:flex; justify-content: space-between;">
-                <button type="submit" name="add_codigo">Adicionar Código</button>
-                <button type="submit" name="finalizar">Codificar</button>
-            </div>
+            <button type="submit" name="add_codigo">Adicionar Código</button>
         </form>
 
         {% if codigos_adicionados %}
@@ -330,6 +332,9 @@
                     {% endfor %}
                 </tbody>
             </table>
+            <form method="POST" action="{{ url_for('codificar') }}">
+                <button type="submit" name="finalizar" class="full-width-btn">Codificar e Gerar Resultado</button>
+            </form>
         {% else %}
             <p>Nenhum código adicionado ainda.</p>
         {% endif %}
