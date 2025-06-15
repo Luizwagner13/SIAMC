@@ -297,7 +297,7 @@ def dividir_pdf_link():
     return redirect(url_for('dividir_pdf_bp.dividir_pdf_route'))
 
 # ===================================================================================================================
-# INÍCIO DA ROTA /CODIFICAR COM AS MELHORIAS E TODA A LÓGICA ATUALIZADA
+# INÍCIO DA ROTA /CODIFICAR COM AS MELHORIAS E TODA A LÓGICA ATUALIZADA (CORRIGIDA)
 # ===================================================================================================================
 @app.route('/codificar', methods=['GET', 'POST'])
 def codificar():
@@ -325,10 +325,10 @@ def codificar():
             novo_item = {'codigo': codigo_selecionado}
 
             # Lógica para preencher campos com base no 'codigo_selecionado'
-            # É fundamental que os 'name' dos inputs/selects no HTML correspondam aqui.
+            # É FUNDAMENTAL que os 'name' dos inputs/selects no HTML correspondam aqui.
             if codigo_selecionado == '319 codigos':
-                novo_item['pavimento'] = request.form.get('pavimento') # name="pavimento"
-                novo_item['troca'] = request.form.get('tipo_troca')   # name="tipo_troca" (CORRIGIDO AQUI)
+                novo_item['pavimento'] = request.form.get('pavimento') 
+                novo_item['troca'] = request.form.get('tipo_troca')   # !!! CORRIGIDO: name="tipo_troca" no HTML
                 novo_item['profundidade'] = request.form.get('profundidade')
                 novo_item['mts_tubo_batido'] = request.form.get('mts_tubo_batido')
                 novo_item['diametro'] = '' # Não se aplica ao 319, mas define para consistência
@@ -408,14 +408,9 @@ def codificar():
 
             try:
                 # Chama a função de processamento (processar_codificacao.py) com a lista de dicionários
-                # NOTA: A função processar_codigos deve retornar uma lista de strings.
+                # NOTA: A função processar_codigos deve retornar uma string formatada.
                 codigos_finalizados_output = processar_codigos(itens_para_processar)
                 
-                # Se processar_codigos já retorna uma string, não precisa de '\n'.join()
-                # Se retorna uma lista de strings, então '\n'.join() é necessário.
-                # Assumindo que processar_codigos retorna uma string ou um objeto que pode ser convertido diretamente em string para exibição.
-                # Se for uma lista, descomente a linha abaixo:
-                # texto_codificado = '\n'.join(codigos_finalizados_output)
                 texto_codificado = codigos_finalizados_output # Assumindo que a função já retorna a string formatada
 
                 flash('Códigos finalizados! Abaixo o texto gerado.', 'sucesso')
