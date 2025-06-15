@@ -8,66 +8,17 @@ def processar_codigos(lista_itens_adicionados):
     output_final = []
 
     # Tabela de mapeamento para os códigos 319 e seus excedentes
-    # Formato: { 'PAVIMENTO': { 'TROCA': { 'codigos_base_por_profundidade': { (min_prof, max_prof): 'CODIGO' }, 'codigo_excedente': 'CODIGO' } } }
-    # Usamos float('inf') para profundidade máxima para a última faixa
+    # Formato: { 'PAVIMENTO': { 'TROCA': { 'profundidades_base': { (min_prof, max_prof): 'CODIGO' }, 'codigo_excedente_mts': 'CODIGO' } } }
     tabela_319 = {
         'PASSEIO': {
             'SEM TROCA': {
-                'codigos_base_por_profundidade': {
-                    (0.0, 1.25): '3810',  # ATÉ 1,25
-                    (1.25, 2.00): '3811', # DE 1,25 A 2,00 (Este é o código para excedente na tabela? Revisei, na sua tabela 3811 parece ser para "EXCEDENTE" e para "1,25 A 2,00". Preciso de um esclarecimento aqui.)
-                                         # Baseado na conversação anterior, 3811 era o EXCEDENTE.
-                                         # Se 3811 é para 1.25-2.00 e para EXCEDENTE, preciso de mais clareza.
-                                         # Vamos usar 3810 como base até 2.00 e 3811 como excedente, como no exemplo.
-                                         # Para 1.25 A 2.00: 3811
-                                         # Para 2.00 A 3.00: 3812
-                                         # Para 3.00 A 5.00: 3813
-                                         # O 3811 aparece em "PROFUNDIDADE" e "UNIDADE E EXCEDENTE".
-
-                                         # Tentativa de interpretar a tabela (linha 3180/3810):
-                                         # Se prof <= 1.25 => 3810 (1 UNIDADE)
-                                         # Se 1.25 < prof <= 2.00 => 3811 (1 UNIDADE)
-                                         # Se 2.00 < prof <= 3.00 => 3812 (1 UNIDADE)
-                                         # Se 3.00 < prof <= 5.00 => 3813 (1 UNIDADE)
-                                         # O "EXCEDENTE" 3811 na coluna UNIDADE E EXCEDENTE indica que ele é usado para o cálculo de metros excedentes.
-                                         # OU seja, o 3811 tanto é um código base para uma faixa de profundidade, quanto o código para o excedente em metros.
-                                         # Isso pode gerar confusão, mas vou seguir essa lógica por enquanto.
-
-                                         # REVISÃO:
-                                         # Baseando-me novamente no seu exemplo:
-                                         # Ex: Profundidade 3.5m (PASSEIO, SEM TROCA) -> 3810 - 1 UNIDADE E 3811 - 1.5 MTS
-                                         # Isso sugere que o 3810 é o "código base" para a parte inicial (até 2m de tubo batido),
-                                         # e o 3811 é o "código de excedente".
-                                         # A tabela mostra 3810 para até 1.25m, e 3811 para 1.25 a 2.00m.
-                                         # Isso é um conflito.
-
-                                         # **PRECISO QUE VOCÊ CONFIRME QUAL CÓDIGO É O "BASE" ATÉ 2 MTS DE TUBO BATIDO, E QUAL É O "EXCEDENTE"**
-                                         # SEGUINDO SEU ÚLTIMO EXEMPLO:
-                                         # "3177 - 1 UNIDADE" (para até 2.00mts de tubo batido)
-                                         # "3178 - 1,5 MTS" (para o excedente)
-                                         # Esses 3177 e 3178 NÃO ESTÃO NA TABELA QUE VOCÊ ME DEU.
-                                         # A tabela tem:
-                                         # PASSEIO / SEM TROCA: 3810 (até 1.25), 3811 (1.25 a 2.00), 3812 (2.00 a 3.00), 3813 (3.00 a 5.00)
-                                         # E para "EXCEDENTE" na mesma linha do 3811 está "3811".
-
-                                         # **VOU ASSUMIR A SEGUINTE REGRA COM BASE NOS CÓDIGOS DA TABELA E SEU ÚLTIMO EXEMPLO DE LÓGICA:**
-                                         # 1. O código base para "1 UNIDADE" é determinado pela `profundidade` informada.
-                                         # 2. O código para "EXCEDENTE" é **sempre o código da segunda faixa de profundidade da tabela (1,25 A 2,00)**.
-                                         #    Ex: Para PASSEIO/SEM TROCA, o 3811 seria o código de excedente.
-                                         #    Para PASSEIO/TROCA PARCIAL, o 3831 seria o código de excedente.
-                                         #    Para PASSEIO/TROCA TOTAL, o 3841 seria o código de excedente.
-                                         # ESTA É A INTERPRETAÇÃO MAIS LÓGICA COM BASE NA TABELA E SEUS EXEMPLOS.
-
-
-                # Mapeamento dos códigos base do 319 por profundidade (até 5.00m)
-                # O último código (por exemplo, 3813 para Passeio/Sem Troca) será o código base se a profundidade for > 3.00
                 'profundidades_base': {
                     (0.0, 1.25): '3810',
-                    (1.25, 2.00): '3811', # Este é um código base para 1.25 a 2.00
+                    (1.25, 2.00): '3811', # Código base para esta faixa E código de excedente
                     (2.00, 3.00): '3812',
-                    (3.00, 5.00): '3813' # Máximo 5.00m de profundidade
+                    (3.00, 5.00): '3813'
                 },
-                'codigo_excedente_mts': '3811' # O código para o excedente de MTS
+                'codigo_excedente_mts': '3811' # O código para o excedente de MTS (conforme discutido)
             },
             'TROCA PARCIAL': {
                 'profundidades_base': {
@@ -120,7 +71,7 @@ def processar_codigos(lista_itens_adicionados):
         'TERRA': {
             'SEM TROCA': {
                 'profundidades_base': {
-                    (0.0, 1.25): '3075', # Este já era usado no 313 (TERRA, <=1.25)
+                    (0.0, 1.25): '3075',
                     (1.25, 2.00): '3409',
                     (2.00, 3.00): '3410',
                     (3.00, 5.00): '3411'
