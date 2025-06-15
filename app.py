@@ -1,5 +1,3 @@
-# app.py (Somente a parte da rota /codificar foi alterada)
-
 from flask import Flask, render_template, request, redirect, url_for, session, flash, send_file
 from werkzeug.security import generate_password_hash, check_password_hash
 import os
@@ -8,9 +6,7 @@ import json
 from datetime import datetime
 
 from dividir_pdf import dividir_pdf_bp  
-
-# Importar o novo módulo de processamento
-from processar_codificacao import processar_codigos # AQUI: Importa a função
+from processar_codificacao import processar_codigos 
 
 app = Flask(__name__)
 app.secret_key = 'segredo123'
@@ -297,19 +293,21 @@ def codificar():
         return redirect(url_for('login'))
 
     codigos_disponiveis = [
-        '313', '319', '320 (rec)', '321', '322', '323', '324',
-        '325', '326', '327', '328', '329', '330', '331', '343'
+        '313', '319', '320', '321', '322', '323', '324',
+        '325', '326', '327', '328', '329', '330', '331', '343' 
     ]
 
     if 'codigos_adicionados' not in session:
         session['codigos_adicionados'] = []
 
     if request.method == 'POST':
-        if 'adicionar_codigo' in request.form:
+        if 'add_codigo' in request.form: # Mudança no nome do botão para 'add_codigo'
             codigo = request.form.get('codigo')
             pavimento = request.form.get('pavimento')
             troca = request.form.get('troca')
             profundidade = request.form.get('profundidade')
+            # NOVO: Captura o campo mts_tubo_batido
+            mts_tubo_batido = request.form.get('mts_tubo_batido') 
             diametro = request.form.get('diametro')
 
             item_codificado = {
@@ -317,6 +315,7 @@ def codificar():
                 'pavimento': pavimento,
                 'troca': troca,
                 'profundidade': profundidade,
+                'mts_tubo_batido': mts_tubo_batido, # NOVO: Adiciona ao dicionário
                 'diametro': diametro
             }
 
@@ -328,13 +327,8 @@ def codificar():
             return redirect(url_for('codificar'))
 
         elif 'finalizar' in request.form:
-            # Chama a função do script externo para processar os códigos
-            # passando a lista de dicionários armazenada na sessão
             itens_para_processar = session.get('codigos_adicionados', [])
             
-            # Aqui vamos chamar a função 'processar_codigos' do módulo 'processar_codificacao'
-            # Isso é melhor do que usar subprocess.run para uma simples função Python
-            # se ambos os arquivos estiverem no mesmo diretório do Render.
             try:
                 codigos_finalizados_output = processar_codigos(itens_para_processar)
                 texto_codificado = '\n'.join(codigos_finalizados_output)
@@ -343,7 +337,7 @@ def codificar():
                 texto_codificado = f"Erro ao processar códigos: {e}"
                 flash(f'Ocorreu um erro ao finalizar a codificação: {e}', 'erro')
             
-            session.pop('codigos_adicionados', None) # Limpa a sessão após finalizar
+            session.pop('codigos_adicionados', None) 
             return render_template('codificar.html', codigos=codigos_disponiveis, texto_codificado=texto_codificado)
 
     return render_template('codificar.html', codigos=codigos_disponiveis, codigos_adicionados=session.get('codigos_adicionados', []), texto_codificado=None)

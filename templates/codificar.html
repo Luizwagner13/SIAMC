@@ -29,7 +29,7 @@
             font-size: 1rem;
         }
         button {
-            width: 48%; /* Ajuste para ter dois botões na mesma linha */
+            width: 48%;
             padding: 1rem;
             font-size: 1rem;
             margin-top: 1rem;
@@ -83,14 +83,18 @@
             document.getElementById('troca').style.display = 'none';
             document.getElementById('profundidade').style.display = 'none';
             document.getElementById('diametro').style.display = 'none';
+            // NOVO: Esconder mts_tubo_batido
+            document.getElementById('mts_tubo_batido').style.display = 'none';
 
             document.getElementById('pavimento_label').style.display = 'none';
             document.getElementById('troca_label').style.display = 'none';
             document.getElementById('profundidade_label').style.display = 'none';
             document.getElementById('diametro_label').style.display = 'none';
+            // NOVO: Esconder mts_tubo_batido_label
+            document.getElementById('mts_tubo_batido_label').style.display = 'none';
 
-            // Ajuste aqui para incluir '320 (rec)' e '343' conforme a lista do Python
-            if (['313','319','321','320 (rec)','343'].includes(codigo)) {
+
+            if (['313','319','321','320','343'].includes(codigo)) {
                 extras.style.display = 'block';
 
                 if (codigo === '313') {
@@ -99,7 +103,7 @@
 
                     document.getElementById('profundidade').style.display = 'block';
                     document.getElementById('profundidade_label').style.display = 'block';
-                } else if (codigo === '319' || codigo === '321') {
+                } else if (codigo === '319' || codigo === '321') { // 319 e 321 agora pedem mts_tubo_batido
                     document.getElementById('pavimento').style.display = 'block';
                     document.getElementById('pavimento_label').style.display = 'block';
 
@@ -108,7 +112,12 @@
 
                     document.getElementById('profundidade').style.display = 'block';
                     document.getElementById('profundidade_label').style.display = 'block';
-                } else if (codigo === '320 (rec)') { // Use o nome completo '320 (rec)'
+
+                    // NOVO: Mostrar mts_tubo_batido para 319 e 321
+                    document.getElementById('mts_tubo_batido').style.display = 'block';
+                    document.getElementById('mts_tubo_batido_label').style.display = 'block';
+
+                } else if (codigo === '320') {
                     document.getElementById('diametro').style.display = 'block';
                     document.getElementById('diametro_label').style.display = 'block';
 
@@ -117,7 +126,7 @@
 
                     document.getElementById('pavimento').style.display = 'block';
                     document.getElementById('pavimento_label').style.display = 'block';
-                } else if (codigo === '343') { // Adicionado '343'
+                } else if (codigo === '343') {
                     document.getElementById('diametro').style.display = 'block';
                     document.getElementById('diametro_label').style.display = 'block';
 
@@ -125,11 +134,12 @@
                     document.getElementById('profundidade_label').style.display = 'block';
                 }
             } else {
-                // Limpa os campos quando não são exibidos
+                // Limpar valores se o código não for dos que exigem extras
                 document.getElementById('pavimento').value = '';
                 document.getElementById('troca').value = '';
                 document.getElementById('profundidade').value = '';
                 document.getElementById('diametro').value = '';
+                document.getElementById('mts_tubo_batido').value = ''; // NOVO: Limpar este também
             }
         }
 
@@ -169,12 +179,16 @@
                 <label for="profundidade" id="profundidade_label">Profundidade:</label>
                 <input type="text" name="profundidade" id="profundidade" placeholder="Informe a profundidade">
 
+                <label for="mts_tubo_batido" id="mts_tubo_batido_label">MTS de Tubo Batido:</label>
+                <input type="text" name="mts_tubo_batido" id="mts_tubo_batido" placeholder="Informe os MTS de Tubo Batido">
+
                 <label for="diametro" id="diametro_label">Diâmetro:</label>
                 <input type="text" name="diametro" id="diametro" placeholder="Informe o diâmetro">
             </div>
 
             <div style="display:flex; justify-content: space-between;">
-                <button type="submit" name="adicionar_codigo">Adicionar Código</button> <button type="submit" name="finalizar">Finalizar Codificação</button>
+                <button type="submit" name="add_codigo">Adicionar Código</button>
+                <button type="submit" name="finalizar">Codificar</button>
             </div>
         </form>
 
@@ -187,28 +201,25 @@
                         <th>Pavimento</th>
                         <th>Troca</th>
                         <th>Profundidade</th>
+                        <th>MTS Tubo Batido</th> {# NOVO: Coluna na tabela #}
                         <th>Diâmetro</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for item in codigos_adicionados %}
                     <tr>
-                        <td>{{ item.get('codigo', '-') }}</td>
-                        <td>{{ item.get('pavimento', '-') }}</td>
-                        <td>{{ item.get('troca', '-') }}</td>
-                        <td>{{ item.get('profundidade', '-') }}</td>
-                        <td>{{ item.get('diametro', '-') }}</td>
+                        <td>{{ item.codigo }}</td>
+                        <td>{{ item.pavimento if item.pavimento else '-' }}</td>
+                        <td>{{ item.troca if item.troca else '-' }}</td>
+                        <td>{{ item.profundidade if item.profundidade else '-' }}</td>
+                        <td>{{ item.mts_tubo_batido if item.mts_tubo_batido else '-' }}</td> {# NOVO: Exibe o valor #}
+                        <td>{{ item.diametro if item.diametro else '-' }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
         {% else %}
             <p>Nenhum código adicionado ainda.</p>
-        {% endif %}
-
-        {% if texto_codificado %}
-            <h2>Resultado da Codificação</h2>
-            <pre>{{ texto_codificado }}</pre>
         {% endif %}
     </div>
 </body>
