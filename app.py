@@ -5,7 +5,7 @@ import subprocess
 import json
 from datetime import datetime
 
-from dividir_pdf import dividir_pdf_bp  
+from dividir_pdf import dividir_pdf_bp
 
 app = Flask(__name__)
 app.secret_key = 'segredo123'
@@ -47,7 +47,8 @@ def login():
                 if user_data.get('is_admin'):
                     return redirect(url_for('admin'))
                 else:
-                    return redirect(url_for('dashboard'))
+                    # MODIFICAÇÃO: Redireciona para escolha_acao após login de usuário normal
+                    return redirect(url_for('escolha_acao'))
 
         flash('Usuário ou senha incorretos', 'erro')
         return redirect(url_for('login'))
@@ -58,6 +59,26 @@ def login():
 def register():
     flash('O cadastro de novos usuários está desativado. Entre em contato com o administrador.', 'erro')
     return redirect(url_for('login'))
+
+# NOVA ROTA: Página de escolha de ação (Dashboard ou Codificar OS)
+@app.route('/escolha_acao')
+def escolha_acao():
+    if 'user' not in session:
+        flash('Faça login para acessar esta área.', 'erro')
+        return redirect(url_for('login'))
+    username = session['user']
+    is_admin = users.get(username, {}).get('is_admin', False) # Verifica se é admin para exibir opções
+    return render_template('escolha_acao.html', user=username, is_admin=is_admin)
+
+# NOVA ROTA: Página de Codificação de Ordens de Serviço
+@app.route('/codificar_os')
+def codificar_os():
+    if 'user' not in session:
+        flash('Faça login para acessar esta área.', 'erro')
+        return redirect(url_for('login'))
+    username = session['user']
+    return render_template('codificar_os.html', user=username)
+
 
 @app.route('/dashboard')
 def dashboard():

@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Codificar Ordens de Serviço | SIAMC</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        .hidden { display: none; }
+        .form-label, label { font-weight: bold; text-transform: uppercase; }
+        .service-card { min-width: 200px; max-width: 250px; margin: 10px; }
+        .service-card small { font-size: 0.8rem; }
+        .form-select, .form-control { font-size: 0.875rem; }
+        .btn-group-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .compact-inputs .form-label, .compact-inputs label { font-size: 0.8rem; }
+        .compact-inputs input, .compact-inputs select { font-size: 0.8rem; padding: 4px 8px; height: auto; }
+    </style>
+</head>
+<body class="bg-light">
+
+    <nav class="navbar navbar-expand-lg navbar-dark bg-success mb-4">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center" href="{{ url_for('escolha_acao') }}">
+                <img src="{{ url_for('static', filename='siamc_logo.jpg') }}" alt="Logo SIAMC" height="40" class="me-2 rounded">
+                <span>SIAMC | Codificação OS</span>
+            </a>
+            <div class="d-flex align-items-center">
+                <div class="me-3 text-white text-end">
+                    <div>Bem-vindo, {{ user }}</div>
+                </div>
+                <a href="{{ url_for('logout') }}" class="btn btn-outline-light btn-sm">Sair</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'success' if category == 'sucesso' else 'danger' }} alert-dismissible fade show" role="alert">
+                        <i class="bi {{ 'bi-check-circle' if category == 'sucesso' else 'bi-exclamation-triangle' }}"></i>
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="btn-group-top">
+            <div class="dropdown">
+                <button class="btn btn-success dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    Selecionar serviço executado
+                </button>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="#" onclick="showFields(313)">313</a></li>
+                    <li><a class="dropdown-item" href="#" onclick="showFields(319)">319</a></li>
+                    <li><a class="dropdown-item" href="#" onclick="showFields(321)">321</a></li>
+                    <li><a class="dropdown-item" href="#" onclick="showFields(343)">343</a></li>
+                    <li><a class="dropdown-item" href="#" onclick="showFields(320)">320</a></li>
+                    <li><a class="dropdown-item" href="#" onclick="showFields(300)">300</a></li>
+                    <li><a class="dropdown-item" href="#" onclick="showFields(329)">329</a></li>
+                </ul>
+            </div>
+            <a href="{{ url_for('escolha_acao') }}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Voltar à Escolha
+            </a>
+        </div>
+
+        <div id="serviceFormContainer" class="mb-4"></div>
+
+        <div class="d-flex flex-wrap" id="addedServices"></div>
+
+        <div class="text-center mt-4">
+            <button id="btnCodificar" class="btn btn-primary" type="button">CODIFICAR O.S.</button>
+        </div>
+
+        <div id="codificationResult" class="mt-4"></div>
+    </div>
+
+    <script>
+        function showFields(code) {
+            const formContainer = document.getElementById('serviceFormContainer');
+            let html = `<div class="card shadow-sm p-3 compact-inputs">
+                <form id="form_${code}" onsubmit="addService(event, ${code})">
+                    <div class="row g-2 align-items-end">`;
+
+            if (code === 313) {
+                html += `
+                    <div class="col">
+                        <label>PAVIMENTO</label>
+                        <select class="form-select" name="pavimento" required>
+                            <option value="">Selecione...</option>
+                            <option value="CIMENTO">CIMENTO</option>
+                            <option value="TERRA">TERRA</option>
+                        </select>
+                    </div>
+                    <div class="col">
+                        <label>PROFUNDIDADE</label>
+                        <input type="number" step="0.01" min="0" class="form-control" name="profundidade" placeholder="Ex: 1.80" required>
+                    </div>`;
+            } else if (code === 319) {
+                html += `
+                    <div class="col">
+                        <label>PAVIMENTO</label>
+                        <select class="form-select" name="pavimento" required>
+                            <option value="">Selecione...</option>
+                            <option>PASSEIO</option>
+                            <option>RUA</option>
+                            <option>TERRA</option>
+                        </select>
+                    </div>
+                    <div class="col">
+                        <label>PROFUNDIDADE</label>
+                        <input type="number" step="0.01" min="0" class="form-control" name="profundidade" required>
+                    </div>
+                    <div class="col">
+                        <label>TROCA</label>
+                        <select class="form-select" name="troca" required>
+                            <option>SEM TROCA</option>
+                            <option>TROCA PARCIAL</option>
+                            <option>TROCA TOTAL</option>
+                        </select>
+                    </div>
+                    <div class="col">
+                        <label>QTD DE TUBO BATIDO</label>
+                        <input type="number" step="0.01" min="0" class="form-control" name="qtd_tubo" required>
+                    </div>`;
+            } else if (code === 321) { // Updated for code 321
+                html += `
+                    <div class="col">
+                        <label>PAVIMENTO</label>
+                        <select class="form-select" name="pavimento" required>
+                            <option value="">Selecione...</option>
+                            <option>SEM PAVIMENTO</option>
+                            <option>PASSEIO REVESTIDO</option>
+                            <option>PISTA COM PAVIMENTO</option>
+                        </select>
+                    </div>
+                    <div class="col">
+                        <label>PROFUNDIDADE</label>
+                        <input type="number" step="0.01" min="0" class="form-control" name="profundidade" required>
+                    </div>
+                    <div class="col">
+                        <label>TROCA</label>
+                        <select class="form-select" name="troca" required>
+                            <option>SEM TROCA</option>
+                            <option>PARCIAL</option>
+                            <option>TOTAL</option>
+                        </select>
+                    </div>
+                    <div class="col">
+                        <label>QTD DE TUBO BATIDO</label>
+                        <input type="number" step="0.01" min="0" class="form-control" name="qtd_tubo" required>
+                    </div>`;
+            }
+            else if (code === 320) {
+                html += `
+                    <div class="col">
+                        <label>PAVIMENTO</label>
+                        <select class="form-select" name="pavimento" required>
+                            <option value="SEM REVESTIMENTO">SEM REVESTIMENTO</option>
+                            <option value="REVESTIDO">REVESTIDO</option>
+                        </select>
+                    </div>
+                    <div class="col">
+                        <label>DIÂMETRO</label>
+                        <select class="form-select" name="diametro" required>
+                            <option value="600">600</option>
+                            <option value="1000">1000</option>
+                        </select>
+                    </div>
+                    <div class="col">
+                        <label>PROFUNDIDADE</label>
+                        <input type="number" step="0.01" min="0" class="form-control" name="profundidade" placeholder="Ex: 1.80" required>
+                    </div>`;
+            } else if (code === 343) {
+                html += `
+                    <div class="col">
+                        <label>PROFUNDIDADE</label>
+                        <input type="number" step="0.01" min="0" class="form-control" name="profundidade" required>
+                    </div>
+                    <div class="col">
+                        <label>DIÂMETRO</label>
+                        <select class="form-select" name="diametro" required>
+                            <option value="">Selecione...</option>
+                            <option value="400">400</option>
+                            <option value="600">600</option>
+                            <option value="1000">1000</option>
+                        </select>
+                    </div>`;
+            } else {
+                html += `<div class="col">Código ${code} ainda não configurado.</div>`;
+            }
+
+            html += `
+                    <div class="col-auto">
+                        <button type="submit" class="btn btn-outline-success">Adicionar Serviço Executado</button>
+                    </div>
+                </div>
+                </form>
+            </div>`;
+            formContainer.innerHTML = html;
+        }
+
+        // Guarda os serviços adicionados para codificação
+        const servicesList = [];
+
+        function addService(event, code) {
+            event.preventDefault();
+            const form = event.target;
+            const formData = new FormData(form);
+
+            // Pega os dados do formulário numa estrutura objeto
+            const serviceData = { code };
+
+            for (let [key, value] of formData.entries()) {
+                serviceData[key] = value;
+            }
+
+            // Adiciona no array global
+            servicesList.push(serviceData);
+
+            // Atualiza visual com os serviços adicionados
+            updateAddedServices();
+
+            form.reset();
+        }
+
+        function updateAddedServices() {
+            const container = document.getElementById('addedServices');
+            container.innerHTML = '';
+
+            servicesList.forEach((service, idx) => {
+                let html = `<div class="card service-card shadow-sm p-2">
+                    <div class="card-body">
+                        <h6 class="card-title">Código ${service.code}</h6>
+                        <ul class="list-unstyled mb-1">`;
+                for (const [key, value] of Object.entries(service)) {
+                    if (key !== 'code') {
+                        html += `<li><strong>${key.toUpperCase()}:</strong> ${value}</li>`;
+                    }
+                }
+                html += `</ul>
+                        <button class="btn btn-sm btn-danger" onclick="removeService(${idx})">Remover</button>
+                    </div>
+                </div>`;
+                container.insertAdjacentHTML('beforeend', html);
+            });
+        }
+
+        function removeService(index) {
+            servicesList.splice(index, 1);
+            updateAddedServices();
+        }
+
+        // Função que codifica todas as ordens adicionadas
+        
+        function codificarServicos() {
+            if (servicesList.length === 0) {
+                alert('Nenhum serviço adicionado para codificar.');
+                return;
+            }
+
+            const resultContainer = document.getElementById('codificationResult');
+            resultContainer.innerHTML = ''; // limpa resultado anterior
+
+            const codigosAgrupados = {};
+
+            servicesList.forEach(service => {
+                let codigoOS = '';
+                let quantidadeDisplay = '';
+
+                if (service.code === 313) {
+                    const prof = parseFloat(service.profundidade);
+                    const pav = service.pavimento ? service.pavimento.toUpperCase() : '';
+
+                    if (pav === 'CIMENTO') {
+                        if (prof >= 0 && prof <= 1.25) codigoOS = '3078';
+                        else if (prof > 1.25 && prof <= 2.00) codigoOS = '3412';
+                        else if (prof > 2.00) codigoOS = '3413'; // Stays at 3413 if > 2.00
+                    } else if (pav === 'TERRA') {
+                        if (prof >= 0 && prof <= 1.25) codigoOS = '3075';
+                        else if (prof > 1.25 && prof <= 2.00) codigoOS = '3409';
+                        else if (prof > 2.00) codigoOS = '3410'; // Stays at 3410 if > 2.00
+                    } else {
+                        codigoOS = 'Código não encontrado';
+                    }
+                    quantidadeDisplay = '1 UNIDADE'; // Default for 313
+                    if (!codigosAgrupados[codigoOS]) {
+                        codigosAgrupados[codigoOS] = [];
+                    }
+                    codigosAgrupados[codigoOS].push(quantidadeDisplay);
+                } else if (service.code === 319) {
+                    const prof = parseFloat(service.profundidade);
+                    const pav = service.pavimento ? service.pavimento.toUpperCase() : '';
+                    const troca = service.troca ? service.troca.toUpperCase() : '';
+                    const qtd_tubo = parseFloat(service.qtd_tubo);
+
+                    let unidade_prof_code = '';
+                    let excedente_prof_code = '';
+
+                    // Determine the base code based on PAVIMENTO, TROCA, and PROFUNDIDADE for UNIDADE
+                    if (pav === 'PASSEIO') {
+                        if (troca === 'SEM TROCA') {
+                            if (prof >= 0 && prof <= 1.25) unidade_prof_code = '3177'; // UNIDADE
+                            else if (prof > 1.25 && prof <= 2.00) unidade_prof_code = '3443'; // UNIDADE
+                            else if (prof > 2.00 && prof <= 3.00) unidade_prof_code = '3445'; // UNIDADE
+                            else if (prof > 3.00) unidade_prof_code = '3816'; // UNIDADE (stays at max if > 5.00)
+                            
+                            // EXEDENTE codes for PASSEIO, SEM TROCA
+                            if (prof >= 0 && prof <= 1.25) excedente_prof_code = '3178';
+                            else if (prof > 1.25 && prof <= 2.00) excedente_prof_code = '3444';
+                            else if (prof > 2.00 && prof <= 3.00) excedente_prof_code = '3446';
+                            else if (prof > 3.00) excedente_prof_code = '3817'; // (stays at max if > 5.00)
+
+                        } else if (troca === 'TROCA PARCIAL') {
+                            if (prof >= 0 && prof <= 1.25) unidade_prof_code = '3159';
+                            else if (prof > 1.25 && prof <= 2.00) unidade_prof_code = '3431';
+                            else if (prof > 2.00 && prof <= 3.00) unidade_prof_code = '3433';
+                            else if (prof > 3.00) unidade_prof_code = '3810';
+                            
+                            // EXEDENTE codes for PASSEIO, TROCA PARCIAL
+                            if (prof >= 0 && prof <= 1.25) excedente_prof_code = '3160';
+                            else if (prof > 1.25 && prof <= 2.00) excedente_prof_code = '3432';
+                            else if (prof > 2.00 && prof <= 3.00) excedente_prof_code = '3434';
+                            else if (prof > 3.00) excedente_prof_code = '3811';
+
+                        } else if (troca === 'TROCA TOTAL') {
+                            if (prof >= 0 && prof <= 1.25) unidade_prof_code = '3141';
+                            else if (prof > 1.25 && prof <= 2.00) unidade_prof_code = '3419';
+                            else if (prof > 2.00 && prof <= 3.00) unidade_prof_code = '3421';
+                            else if (prof > 3.00) unidade_prof_code = '3804';
+
+                            // EXEDENTE codes for PASSEIO, TROCA TOTAL
+                            if (prof >= 0 && prof <= 1.25) excedente_prof_code = '3142';
+                            else if (prof > 1.25 && prof <= 2.00) excedente_prof_code = '3420';
+                            else if (prof > 2.00 && prof <= 3.00) excedente_prof_code = '3422';
+                            else if (prof > 3.00) excedente_prof_code = '3805';
+                        }
+                    } else if (pav === 'RUA') {
+                        if (troca === 'SEM TROCA') {
+                            if (prof >= 0 && prof <= 1.25) unidade_prof_code = '3183';
+                            else if (prof > 1.25 && prof <= 2.00) unidade_prof_code = '3447';
+                            else if (prof > 2.00 && prof <= 3.00) unidade_prof_code = '3449';
+                            else if (prof > 3.00) unidade_prof_code = '3818';
+
+                            // EXEDENTE codes for RUA, SEM TROCA
+                            if (prof >= 0 && prof <= 1.25) excedente_prof_code = '3184';
+                            else if (prof > 1.25 && prof <= 2.00) excedente_prof_code = '3448';
+                            else if (prof > 2.00 && prof <= 3.00) excedente_prof_code = '3450';
+                            else if (prof > 3.00) excedente_prof_code = '3819';
+
+                        } else if (troca === 'TROCA PARCIAL') {
+                            if (prof >= 0 && prof <= 1.25) unidade_prof_code = '3165';
+                            else if (prof > 1.25 && prof <= 2.00) unidade_prof_code = '3435';
+                            else if (prof > 2.00 && prof <= 3.00) unidade_prof_code = '3437';
+                            else if (prof > 3.00) unidade_prof_code = '3812';
+
+                            // EXEDENTE codes for RUA, TROCA PARCIAL
+                            if (prof >= 0 && prof <= 1.25) excedente_prof_code = '3166';
+                            else if (prof > 1.25 && prof <= 2.00) excedente_prof_code = '3436';
+                            else if (prof > 2.00 && prof <= 3.00) excedente_prof_code = '3438';
+                            else if (prof > 3.00) excedente_prof_code = '3813';
+
+                        } else if (troca === 'TROCA TOTAL') {
+                            if (prof >= 0 && prof <= 1.25) unidade_prof_code = '3147';
+                            else if (prof > 1.25 && prof <= 2.00) unidade_prof_code = '3423';
+                            else if (prof > 2.00 && prof <= 3.00) unidade_prof_code = '3425';
+                            else if (prof > 3.00) unidade_prof_code = '3806';
+
+                            // EXEDENTE codes for RUA, TROCA TOTAL
+                            if (prof >= 0 && prof <= 1.25) excedente_prof_code = '3148';
+                            else if (prof > 1.25 && prof <= 2.00) excedente_prof_code = '3424';
+                            else if (prof > 2.00 && prof <= 3.00) excedente_prof_code = '3426';
+                            else if (prof > 3.00) excedente_prof_code = '3807';
+                        }
+                    } else if (pav === 'TERRA') {
+                        if (troca === 'SEM TROCA') {
+                            if (prof >= 0 && prof <= 1.25) unidade_prof_code = '3171';
+                            else if (prof > 1.25 && prof <= 2.00) unidade_prof_code = '3439';
+                            else if (prof > 2.00 && prof <= 3.00) unidade_prof_code = '3441';
+                            else if (prof > 3.00) unidade_prof_code = '3814';
+
+                            // EXEDENTE codes for TERRA, SEM TROCA
+                            if (prof >= 0 && prof <= 1.25) excedente_prof_code = '3172';
+                            else if (prof > 1.25 && prof <= 2.00) excedente_prof_code = '3440';
+                            else if (prof > 2.00 && prof <= 3.00) excedente_prof_code = '3442';
+                            else if (prof > 3.00) excedente_prof_code = '3815';
+
+                        } else if (troca === 'TROCA PARCIAL') {
+                            if (prof >= 0 && prof <= 1.25) unidade_prof_code = '3153';
+                            else if (prof > 1.25 && prof <= 2.00) unidade_prof_code = '3427';
+                            else if (prof > 2.00 && prof <= 3.00) unidade_prof_code = '3429';
+                            else if (prof > 3.00) unidade_prof_code = '3808';
+
+                            // EXEDENTE codes for TERRA, TROCA PARCIAL
+                            if (prof >= 0 && prof <= 1.25) excedente_prof_code = '3154';
+                            else if (prof > 1.25 && prof <= 2.00) excedente_prof_code = '3428';
+                            else if (prof > 2.00 && prof <= 3.00) excedente_prof_code = '3430';
+                            else if (prof > 3.00) excedente_prof_code = '3809';
+
+                        } else if (troca === 'TROCA TOTAL') {
+                            if (prof >= 0 && prof <= 1.25) unidade_prof_code = '3135';
+                            else if (prof > 1.25 && prof <= 2.00) unidade_prof_code = '3415';
+                            else if (prof > 2.00 && prof <= 3.00) unidade_prof_code = '3417';
+                            else if (prof > 3.00) unidade_prof_code = '3802';
+
+                            // EXEDENTE codes for TERRA, TROCA TOTAL
+                            if (prof >= 0 && prof <= 1.25) excedente_prof_code = '3136';
+                            else if (prof > 1.25 && prof <= 2.00) excedente_prof_code = '3416';
+                            else if (prof > 2.00 && prof <= 3.00) excedente_prof_code = '3418';
+                            else if (prof > 3.00) excedente_prof_code = '3803';
+                        }
+                    }
+
+                    // Process UNIDADE (up to 2 meters for 319)
+                    if (qtd_tubo >= 0) { // Always at least 1 UNIDADE if qtd_tubo is positive
+                        if (!codigosAgrupados[unidade_prof_code]) {
+                            codigosAgrupados[unidade_prof_code] = [];
+                        }
+                        codigosAgrupados[unidade_prof_code].push('1 UNIDADE');
+                    }
+
+                    // Process EXEDENTE (anything over 2 meters for 319)
+                    if (qtd_tubo > 2.00) {
+                        const excedente_val = (qtd_tubo - 2.00).toFixed(2); // Calculate excess
+                        if (!codigosAgrupados[excedente_prof_code]) {
+                            codigosAgrupados[excedente_prof_code] = [];
+                        }
+                        codigosAgrupados[excedente_prof_code].push(`${excedente_val} MTS`);
+                    }
+                } else if (service.code === 321) { // New logic for 321
+                    const prof = parseFloat(service.profundidade);
+                    const pav = service.pavimento ? service.pavimento.toUpperCase() : '';
+                    const troca = service.troca ? service.troca.toUpperCase() : '';
+                    const qtd_tubo = parseFloat(service.qtd_tubo);
+
+                    let unidade_prof_code = '';
+                    let excedente_prof_code = '';
+
+                    if (pav === 'SEM PAVIMENTO') {
+                        if (troca === 'TOTAL') {
+                            if (prof >= 0 && prof <= 1.25) { unidade_prof_code = '3081'; excedente_prof_code = '3082'; }
+                            else if (prof > 1.25 && prof <= 2.00) { unidade_prof_code = '3451'; excedente_prof_code = '3452'; }
+                            else if (prof > 2.00 && prof <= 3.00) { unidade_prof_code = '3453'; excedente_prof_code = '3454'; }
+                            else if (prof > 3.00) { unidade_prof_code = '3820'; excedente_prof_code = '3821'; } // Stays at max
+                        } else if (troca === 'PARCIAL') {
+                            if (prof >= 0 && prof <= 1.25) { unidade_prof_code = '3099'; excedente_prof_code = '3100'; }
+                            else if (prof > 1.25 && prof <= 2.00) { unidade_prof_code = '3464'; excedente_prof_code = '3465'; }
+                            else if (prof > 2.00 && prof <= 3.00) { unidade_prof_code = '3466'; excedente_prof_code = '3467'; }
+                            else if (prof > 3.00) { unidade_prof_code = '3826'; excedente_prof_code = '3827'; } // Stays at max
+                        } else if (troca === 'SEM TROCA') {
+                            if (prof >= 0 && prof <= 1.25) { unidade_prof_code = '3117'; excedente_prof_code = '3118'; }
+                            else if (prof > 1.25 && prof <= 2.00) { unidade_prof_code = '3476'; excedente_prof_code = '3477'; }
+                            else if (prof > 2.00 && prof <= 3.00) { unidade_prof_code = '3478'; excedente_prof_code = '3479'; }
+                            else if (prof > 3.00) { unidade_prof_code = '3832'; excedente_prof_code = '3833'; } // Stays at max
+                        }
+                    } else if (pav === 'PASSEIO REVESTIDO') {
+                        if (troca === 'TOTAL') {
+                            if (prof >= 0 && prof <= 1.25) { unidade_prof_code = '3087'; excedente_prof_code = '3088'; }
+                            else if (prof > 1.25 && prof <= 2.00) { unidade_prof_code = '3455'; excedente_prof_code = '3456'; }
+                            else if (prof > 2.00 && prof <= 3.00) { unidade_prof_code = '3457'; excedente_prof_code = '3458'; }
+                            else if (prof > 3.00) { unidade_prof_code = '3822'; excedente_prof_code = '3823'; } // Stays at max
+                        } else if (troca === 'PARCIAL') {
+                            if (prof >= 0 && prof <= 1.25) { unidade_prof_code = '3105'; excedente_prof_code = '3106'; }
+                            else if (prof > 1.25 && prof <= 2.00) { unidade_prof_code = '3468'; excedente_prof_code = '3469'; }
+                            else if (prof > 2.00 && prof <= 3.00) { unidade_prof_code = '3470'; excedente_prof_code = '3471'; }
+                            else if (prof > 3.00) { unidade_prof_code = '3828'; excedente_prof_code = '3829'; } // Stays at max
+                        } else if (troca === 'SEM TROCA') {
+                            if (prof >= 0 && prof <= 1.25) { unidade_prof_code = '3123'; excedente_prof_code = '3124'; }
+                            else if (prof > 1.25 && prof <= 2.00) { unidade_prof_code = '3480'; excedente_prof_code = '3481'; }
+                            else if (prof > 2.00 && prof <= 3.00) { unidade_prof_code = '3482'; excedente_prof_code = '3483'; }
+                            else if (prof > 3.00) { unidade_prof_code = '3834'; excedente_prof_code = '3835'; } // Stays at max
+                        }
+                    } else if (pav === 'PISTA COM PAVIMENTO') {
+                        if (troca === 'TOTAL') {
+                            if (prof >= 0 && prof <= 1.25) { unidade_prof_code = '3093'; excedente_prof_code = '3094'; }
+                            else if (prof > 1.25 && prof <= 2.00) { unidade_prof_code = '3459'; excedente_prof_code = '3460'; }
+                            else if (prof > 2.00 && prof <= 3.00) { unidade_prof_code = '3461'; excedente_prof_code = '3463'; } // Using 3463 for excedente
+                            else if (prof > 3.00) { unidade_prof_code = '3824'; excedente_prof_code = '3825'; } // Stays at max
+                        } else if (troca === 'PARCIAL') {
+                            if (prof >= 0 && prof <= 1.25) { unidade_prof_code = '3111'; excedente_prof_code = '3112'; }
+                            else if (prof > 1.25 && prof <= 2.00) { unidade_prof_code = '3472'; excedente_prof_code = '3473'; }
+                            else if (prof > 2.00 && prof <= 3.00) { unidade_prof_code = '3474'; excedente_prof_code = '3475'; }
+                            else if (prof > 3.00) { unidade_prof_code = '3830'; excedente_prof_code = '3831'; } // Stays at max
+                        } else if (troca === 'SEM TROCA') {
+                            if (prof >= 0 && prof <= 1.25) { unidade_prof_code = '3129'; excedente_prof_code = '3130'; }
+                            else if (prof > 1.25 && prof <= 2.00) { unidade_prof_code = '3484'; excedente_prof_code = '3485'; }
+                            else if (prof > 2.00 && prof <= 3.00) { unidade_prof_code = '3486'; excedente_prof_code = '3487'; }
+                            else if (prof > 3.00) { unidade_prof_code = '3836'; excedente_prof_code = '3837'; } // Stays at max
+                        }
+                    }
+
+                    // Process UNIDADE (up to 4 meters for 321)
+                    if (qtd_tubo >= 0) {
+                        if (!codigosAgrupados[unidade_prof_code]) {
+                            codigosAgrupados[unidade_prof_code] = [];
+                        }
+                        codigosAgrupados[unidade_prof_code].push('1 UNIDADE');
+                    }
+
+                    // Process EXEDENTE (anything over 4 meters for 321)
+                    if (qtd_tubo > 4.00) {
+                        const excedente_val = (qtd_tubo - 4.00).toFixed(2); // Calculate excess
+                        if (!codigosAgrupados[excedente_prof_code]) {
+                            codigosAgrupados[excedente_prof_code] = [];
+                        }
+                        codigosAgrupados[excedente_prof_code].push(`${excedente_val} MTS`);
+                    }
+                }
+                else if (service.code === 320) {
+                    const prof = parseFloat(service.profundidade);
+                    const pav = service.pavimento ? service.pavimento.toUpperCase() : '';
+                    const diam = service.diametro ? service.diametro : '';
+
+                    if (diam === '600') {
+                        if (pav === 'SEM REVESTIMENTO') {
+                            if (prof >= 0 && prof <= 1.25) codigoOS = '3059';
+                            else if (prof > 1.25 && prof <= 2.00) codigoOS = '3400';
+                            else if (prof > 2.00 && prof <= 3.00) codigoOS = '3401';
+                            else if (prof > 3.00) codigoOS = '3796'; // Stays at 3796 if > 3.00
+                        } else if (pav === 'REVESTIDO') {
+                            if (prof >= 0 && prof <= 1.25) codigoOS = '3060';
+                            else if (prof > 1.25 && prof <= 2.00) codigoOS = '3403';
+                            else if (prof > 2.00 && prof <= 3.00) codigoOS = '3404';
+                            else if (prof > 3.00) codigoOS = '3797'; // Stays at 3797 if > 3.00
+                        } else {
+                            codigoOS = 'Código não encontrado';
+                        }
+                    } else if (diam === '1000') {
+                        if (pav === 'SEM REVESTIMENTO') {
+                            if (prof >= 0 && prof <= 1.25) codigoOS = '3065';
+                            else if (prof > 1.25 && prof <= 2.00) codigoOS = '3402';
+                            else if (prof > 2.00 && prof <= 3.00) codigoOS = '3405';
+                            else if (prof > 3.00) codigoOS = '3798'; // Stays at 3798 if > 3.00
+                        } else if (pav === 'REVESTIDO') {
+                            if (prof >= 0 && prof <= 1.25) codigoOS = '3066';
+                            else if (prof > 1.25 && prof <= 2.00) codigoOS = '3406';
+                            else if (prof > 2.00 && prof <= 3.00) codigoOS = '3407';
+                            else if (prof > 3.00) codigoOS = '3799'; // Stays at 3799 if > 3.00
+                        } else {
+                            codigoOS = 'Código não encontrado';
+                        }
+                    } else {
+                        codigoOS = 'Código não encontrado';
+                    }
+                    quantidadeDisplay = '1 UNIDADE'; // Default for 320
+                    if (!codigosAgrupados[codigoOS]) {
+                        codigosAgrupados[codigoOS] = [];
+                    }
+                    codigosAgrupados[codigoOS].push(quantidadeDisplay);
+                } else if (service.code === 343) {
+                    const prof = parseFloat(service.profundidade);
+                    const diam = parseInt(service.diametro);
+
+                    if (diam === 400) {
+                        if (prof >= 0 && prof <= 1.25) codigoOS = '3555';
+                        else if (prof > 1.25 && prof <= 2.00) codigoOS = '3556';
+                        else if (prof > 2.00 && prof <= 3.00) codigoOS = '3557';
+                        else if (prof > 3.00) codigoOS = '3794'; // Stays at 3794 if > 3.00
+                        else codigoOS = 'Código não encontrado para diâmetro 400';
+                    } else if (diam === 600) {
+                        if (prof >= 0 && prof <= 1.25) codigoOS = '3547';
+                        else if (prof > 1.25 && prof <= 2.00) codigoOS = '3548';
+                        else if (prof > 2.00 && prof <= 3.00) codigoOS = '3549';
+                        else if (prof > 3.00) codigoOS = '3792'; // Stays at 3792 if > 3.00
+                        else codigoOS = 'Código não encontrado para diâmetro 600';
+                    } else if (diam === 1000) {
+                        if (prof >= 0 && prof <= 1.25) codigoOS = '3551';
+                        else if (prof > 1.25 && prof <= 2.00) codigoOS = '3552';
+                        else if (prof > 2.00 && prof <= 3.00) codigoOS = '3553';
+                        else if (prof > 3.00) codigoOS = '3793'; // Stays at 3793 if > 3.00
+                        else codigoOS = 'Código não encontrado para diâmetro 1000';
+                    } else {
+                        codigoOS = 'Código não encontrado para diâmetro';
+                    }
+                    quantidadeDisplay = '1 UNIDADE'; // Default for 343
+                    if (!codigosAgrupados[codigoOS]) {
+                        codigosAgrupados[codigoOS] = [];
+                    }
+                    codigosAgrupados[codigoOS].push(quantidadeDisplay);
+                }
+                else {
+                    codigoOS = 'Código não configurado';
+                    quantidadeDisplay = '';
+                    if (!codigosAgrupados[codigoOS]) {
+                        codigosAgrupados[codigoOS] = [];
+                    }
+                    codigosAgrupados[codigoOS].push('1 UNIDADE'); // Generic default
+                }
+            });
+
+            let resultadoFinal = '';
+            for (const [codigo, quantidades] of Object.entries(codigosAgrupados)) {
+                quantidades.forEach(qtd => {
+                    resultadoFinal += `${codigo} - ${qtd}<br>`;
+                });
+            }
+
+            resultContainer.innerHTML = `<div class="alert alert-info">${resultadoFinal}</div>`;
+        }
+
+        document.getElementById('btnCodificar').addEventListener('click', codificarServicos);
+
+        // Inicializa com o formulário do código 320 por exemplo
+        showFields(320);
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
